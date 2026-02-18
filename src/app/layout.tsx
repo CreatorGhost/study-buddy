@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "StudyBuddy AI - CBSE Class 12",
-  description: "AI-powered study companion for CBSE Class 12 board exam preparation",
+  title: "StudyBuddy AI",
+  description: "AI-powered study companion for Physics, Chemistry, Biology, Math, and Computer Science",
 };
 
 export default function RootLayout({

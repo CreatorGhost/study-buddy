@@ -94,7 +94,7 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-border">
-          <p className="text-[11px] text-text-faint">Powered by Claude AI</p>
+          <p className="text-[11px] text-text-faint">Powered by Claude</p>
         </div>
       </aside>
     </>

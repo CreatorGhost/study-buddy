@@ -22,7 +22,7 @@ const features = [
   {
     icon: Brain,
     title: 'Quiz',
-    description: 'CBSE-pattern MCQs, assertion-reasoning, and competency-based questions.',
+    description: 'MCQs, assertion-reasoning, and competency-based questions.',
     href: '/quiz',
   },
   {
@@ -51,7 +51,7 @@ export default function HomePage() {
             StudyBuddy AI
           </h1>
           <p className="text-[15px] text-text-secondary leading-relaxed max-w-md">
-            AI-powered study companion for CBSE Class 12. Learn concepts, take quizzes, and track your progress.
+            AI-powered study companion. Learn concepts, take quizzes, and track your progress.
           </p>
         </div>
 

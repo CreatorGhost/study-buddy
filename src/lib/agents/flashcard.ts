@@ -9,7 +9,7 @@ export async function generateFlashcards(
 ): Promise<FlashcardData[]> {
   const prompt = customNotes
     ? `Generate flashcards from these notes on "${topic}":\n\n${customNotes}`
-    : `Generate flashcards for the topic: "${topic}" for CBSE Class 12 ${subject}.`;
+    : `Generate flashcards for the topic: "${topic}" for ${subject}.`;
 
   const response = await client.messages.create({
     model: MODEL_SMART,

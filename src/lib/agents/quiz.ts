@@ -3,7 +3,7 @@ import { getQuizPrompt } from '@/lib/prompts';
 import { Subject, QuizQuestion, QuizConfig } from '@/types';
 
 export async function generateQuiz(config: QuizConfig): Promise<QuizQuestion[]> {
-  const prompt = `Generate ${config.numQuestions} ${config.difficulty} difficulty ${config.questionType === 'mixed' ? 'mixed (MCQ and assertion-reasoning)' : config.questionType} questions on the topic: "${config.topic}" for CBSE Class 12 ${config.subject}.`;
+  const prompt = `Generate ${config.numQuestions} ${config.difficulty} difficulty ${config.questionType === 'mixed' ? 'mixed (MCQ and assertion-reasoning)' : config.questionType} questions on the topic: "${config.topic}" for ${config.subject}.`;
 
   const response = await client.messages.create({
     model: MODEL_SMART,
@@ -37,7 +37,7 @@ export async function evaluateAnswer(
   const response = await client.messages.create({
     model: MODEL_SMART,
     max_tokens: 512,
-    system: `You are a CBSE Class 12 ${subject} evaluator. Provide brief, constructive feedback on the student's answer.`,
+    system: `You are a ${subject} evaluator. Provide brief, constructive feedback on the student's answer.`,
     messages: [{
       role: 'user',
       content: `Question: ${question}\nStudent's answer: ${studentAnswer}\nCorrect answer: ${correctAnswer}\n\nProvide feedback in 2-3 sentences.`,

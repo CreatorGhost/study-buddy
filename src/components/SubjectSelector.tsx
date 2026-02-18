@@ -7,11 +7,7 @@ const subjects: Subject[] = [
   'Chemistry',
   'Biology',
   'Mathematics',
-  'English',
-  'History',
-  'Geography',
-  'Economics',
-  'Political Science',
+  'Computer Science',
 ];
 
 interface SubjectSelectorProps {

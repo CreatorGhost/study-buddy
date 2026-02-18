@@ -3,11 +3,7 @@ export type Subject =
   | 'Chemistry'
   | 'Biology'
   | 'Mathematics'
-  | 'English'
-  | 'History'
-  | 'Geography'
-  | 'Economics'
-  | 'Political Science';
+  | 'Computer Science';
 
 export type AgentType = 'orchestrator' | 'tutor' | 'quiz' | 'diagram' | 'flashcard';
 

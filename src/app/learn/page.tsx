@@ -21,7 +21,7 @@ const starterPrompts = [
   'Explain photosynthesis step by step',
   'Derive the quadratic formula',
   'What are p-block elements?',
-  'Explain derivatives in calculus',
+  'Explain OOP concepts in Python',
 ];
 
 export default function LearnPage() {
@@ -323,7 +323,7 @@ export default function LearnPage() {
                 <div className="flex flex-col items-center justify-center h-full animate-fade-in-up">
                   <h2 className="text-[15px] font-medium text-text-primary mb-1.5">What would you like to learn?</h2>
                   <p className="text-[12px] text-text-muted mb-8 text-center max-w-sm">
-                    Ask about your CBSE Class 12 subjects. I&apos;ll explain concepts, draw diagrams, and guide you step by step.
+                    Ask about any topic in Physics, Chemistry, Biology, Math, or CS. I&apos;ll explain, draw diagrams, and guide you step by step.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-w-lg w-full">
                     {starterPrompts.map((prompt, i) => (
