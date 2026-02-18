@@ -5,43 +5,37 @@ import Link from 'next/link';
 import { subjects } from '@/components/SubjectSelector';
 import { Subject } from '@/types';
 import {
-  GraduationCap,
   BookOpen,
   Brain,
-  CreditCard,
-  LayoutDashboard,
+  Layers,
+  BarChart3,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 
 const features = [
   {
     icon: BookOpen,
-    title: 'AI Tutor',
-    description: 'Learn with Socratic teaching, step-by-step explanations, and visual diagrams',
+    title: 'Learn',
+    description: 'Socratic tutoring with step-by-step explanations and visual diagrams.',
     href: '/learn',
-    color: '#455EB5',
   },
   {
     icon: Brain,
-    title: 'Smart Quizzes',
-    description: 'CBSE-pattern MCQs, assertion-reasoning, and competency-based questions',
+    title: 'Quiz',
+    description: 'CBSE-pattern MCQs, assertion-reasoning, and competency-based questions.',
     href: '/quiz',
-    color: '#5643CC',
   },
   {
-    icon: CreditCard,
+    icon: Layers,
     title: 'Flashcards',
-    description: 'Generate flip cards from any topic or your own notes for quick revision',
+    description: 'Generate flip cards from any topic or your notes for quick revision.',
     href: '/flashcards',
-    color: '#673FD7',
   },
   {
-    icon: LayoutDashboard,
+    icon: BarChart3,
     title: 'Dashboard',
-    description: 'Track progress, identify weak areas, and get study recommendations',
+    description: 'Track progress, find weak areas, and get study recommendations.',
     href: '/dashboard',
-    color: '#7C3AED',
   },
 ];
 
@@ -50,72 +44,55 @@ export default function HomePage() {
 
   return (
     <main className="flex-1 min-h-screen">
-      <div className="page-glow" />
-
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-16 md:py-24">
+      <div className="max-w-2xl mx-auto px-6 pt-24 pb-16">
         {/* Hero */}
-        <div className="text-center mb-16 animate-fade-in-up">
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 rounded-2xl accent-gradient flex items-center justify-center accent-glow">
-              <GraduationCap size={32} className="text-white" />
-            </div>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-            <span className="text-gradient">StudyBuddy AI</span>
+        <div className="mb-16 animate-fade-in-up">
+          <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-3">
+            StudyBuddy AI
           </h1>
-          <p className="text-lg text-text-secondary mb-2">
-            Your AI-powered CBSE Class 12 study companion
-          </p>
-          <p className="text-sm text-text-muted max-w-md mx-auto">
-            Learn visually, test your knowledge, and track your progress with intelligent AI agents
+          <p className="text-[15px] text-text-secondary leading-relaxed max-w-md">
+            AI-powered study companion for CBSE Class 12. Learn concepts, take quizzes, and track your progress.
           </p>
         </div>
 
         {/* Feature cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
+        <div className="space-y-1 mb-16">
           {features.map((feature, i) => (
             <Link
               key={feature.title}
               href={feature.href}
-              className={`glass-card p-6 group hover:border-border-hover transition-all duration-150
+              className={`flex items-center gap-4 px-4 py-3.5 -mx-4 rounded-lg
+                         text-text-secondary hover:text-text-primary hover:bg-bg-surface
+                         transition-colors duration-100 group
                          animate-fade-in-up stagger-${i + 1}`}
             >
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
-                style={{ background: `${feature.color}20` }}
-              >
-                <feature.icon size={20} style={{ color: feature.color }} />
+              <div className="w-8 h-8 rounded-md bg-bg-elevated border border-border flex items-center justify-center shrink-0">
+                <feature.icon size={16} className="text-text-muted group-hover:text-text-primary transition-colors" strokeWidth={1.75} />
               </div>
-              <h3 className="text-base font-semibold text-text-primary mb-1.5 flex items-center gap-2">
-                {feature.title}
-                <ArrowRight
-                  size={14}
-                  className="text-text-muted opacity-0 -translate-x-2 group-hover:opacity-100
-                             group-hover:translate-x-0 transition-all duration-150"
-                />
-              </h3>
-              <p className="text-sm text-text-muted leading-relaxed">{feature.description}</p>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium text-text-primary mb-0.5">{feature.title}</div>
+                <div className="text-[12px] text-text-muted leading-relaxed">{feature.description}</div>
+              </div>
+              <ArrowRight
+                size={14}
+                className="text-text-faint opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              />
             </Link>
           ))}
         </div>
 
-        {/* Quick start */}
-        <div className="text-center animate-fade-in-up stagger-4">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles size={16} className="text-accent-2" />
-            <h2 className="text-sm font-medium text-text-primary">Quick Start</h2>
-          </div>
-          <p className="text-xs text-text-muted mb-4">Pick a subject and start learning</p>
+        {/* Subject selector */}
+        <div className="animate-fade-in-up stagger-5">
+          <p className="text-[12px] font-medium text-text-muted uppercase tracking-wider mb-3">Quick Start</p>
 
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <div className="flex flex-wrap gap-1.5 mb-5">
             {subjects.map(subject => (
               <button
                 key={subject}
                 onClick={() => setSelectedSubject(subject)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150
+                className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
                   ${selectedSubject === subject
-                    ? 'accent-gradient text-white accent-glow'
+                    ? 'bg-accent text-white'
                     : 'bg-bg-surface text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
                   }`}
               >
@@ -126,11 +103,10 @@ export default function HomePage() {
 
           <Link
             href="/learn"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg accent-gradient
-                       text-white font-medium hover:accent-glow transition-all"
+            className="btn-primary inline-flex items-center gap-2"
           >
-            Start Learning {selectedSubject}
-            <ArrowRight size={16} />
+            Start learning {selectedSubject}
+            <ArrowRight size={14} />
           </Link>
         </div>
       </div>

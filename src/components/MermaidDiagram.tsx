@@ -41,18 +41,18 @@ export default function MermaidDiagram({ chart }: MermaidDiagramProps) {
           suppressErrorRendering: true,
           themeVariables: {
             darkMode: true,
-            background: '#0f1117',
-            primaryColor: '#5643CC',
-            primaryTextColor: '#f7f8f8',
-            primaryBorderColor: '#455EB5',
-            lineColor: '#858699',
-            secondaryColor: '#1a1b23',
-            tertiaryColor: '#0f1117',
+            background: '#111113',
+            primaryColor: '#5e6ad2',
+            primaryTextColor: '#eeeff1',
+            primaryBorderColor: '#5e6ad2',
+            lineColor: '#5e5f63',
+            secondaryColor: '#191a1c',
+            tertiaryColor: '#111113',
             fontFamily: 'Inter, sans-serif',
-            fontSize: '14px',
-            nodeBorder: '#455EB5',
-            mainBkg: '#1a1b23',
-            clusterBkg: '#0f1117',
+            fontSize: '13px',
+            nodeBorder: '#5e6ad2',
+            mainBkg: '#191a1c',
+            clusterBkg: '#111113',
           },
           flowchart: { curve: 'basis', padding: 15 },
           mindmap: { padding: 20 },
@@ -83,16 +83,16 @@ export default function MermaidDiagram({ chart }: MermaidDiagramProps) {
 
   if (error) {
     return (
-      <div className="glass-card p-4 text-text-muted text-sm">
+      <div className="bg-bg-surface border border-border rounded-lg p-3 text-text-muted text-[12px]">
         <p>Diagram preview:</p>
-        <pre className="mt-2 text-xs bg-bg-elevated p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">{chart}</pre>
+        <pre className="mt-2 text-[11px] bg-bg-inset p-3 rounded-md overflow-x-auto whitespace-pre-wrap">{chart}</pre>
       </div>
     );
   }
 
   return (
     <div
-      className={`glass-card p-4 overflow-x-auto transition-opacity duration-300 ${rendered ? 'opacity-100' : 'opacity-50'}`}
+      className={`bg-bg-surface border border-border rounded-lg p-4 overflow-x-auto transition-opacity duration-200 ${rendered ? 'opacity-100' : 'opacity-50'}`}
     >
       <div ref={containerRef} className="flex justify-center min-h-[100px]" />
     </div>

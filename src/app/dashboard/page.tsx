@@ -32,68 +32,57 @@ export default function DashboardPage() {
     <>
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="px-6 py-4 border-b border-border">
-          <h1 className="text-lg font-semibold text-text-primary">Dashboard</h1>
-          <p className="text-xs text-text-muted">Track your progress</p>
+        <header className="flex items-center px-4 h-12 border-b border-border shrink-0">
+          <h1 className="text-[13px] font-semibold text-text-primary">Dashboard</h1>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-4 py-6">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full animate-fade-in-up">
-              <div className="w-14 h-14 rounded-2xl accent-gradient flex items-center justify-center mb-4 accent-glow">
-                <Trophy size={24} className="text-white" />
-              </div>
-              <h2 className="text-xl font-semibold text-text-primary mb-2">No data yet</h2>
-              <p className="text-sm text-text-muted mb-6 text-center max-w-sm">
-                Take a quiz or study a topic to start tracking your progress
+              <Trophy size={24} className="text-text-faint mb-3" strokeWidth={1.5} />
+              <h2 className="text-[15px] font-medium text-text-primary mb-1">No data yet</h2>
+              <p className="text-[12px] text-text-muted mb-5 text-center max-w-xs">
+                Take a quiz or study a topic to start tracking progress
               </p>
-              <div className="flex gap-3">
-                <Link
-                  href="/learn"
-                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-text-secondary
-                             hover:border-border-hover hover:text-text-primary transition-all"
-                >
+              <div className="flex gap-2">
+                <Link href="/learn" className="btn-ghost">
                   Start Learning
                 </Link>
-                <Link
-                  href="/quiz"
-                  className="px-4 py-2 rounded-lg accent-gradient text-sm font-medium text-white
-                             hover:accent-glow transition-all"
-                >
+                <Link href="/quiz" className="btn-primary">
                   Take a Quiz
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
-              {/* Stats cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="max-w-3xl mx-auto space-y-6 animate-fade-in-up">
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <StatCard
                   label="Quizzes Taken"
                   value={stats.totalQuizzes}
-                  icon={<Brain size={18} className="text-accent-2" />}
+                  icon={<Brain size={14} className="text-accent" strokeWidth={1.75} />}
                 />
                 <StatCard
                   label="Average Score"
                   value={`${stats.averageScore}%`}
-                  icon={<Trophy size={18} className="text-accent-2" />}
+                  icon={<Trophy size={14} className="text-accent" strokeWidth={1.75} />}
                 />
                 <StatCard
                   label="Topics Studied"
                   value={stats.totalTopics}
-                  icon={<BookOpen size={18} className="text-accent-2" />}
+                  icon={<BookOpen size={14} className="text-accent" strokeWidth={1.75} />}
                 />
                 <StatCard
                   label="Study Streak"
-                  value={`${stats.streak} days`}
-                  icon={<Flame size={18} className="text-accent-2" />}
+                  value={`${stats.streak}d`}
+                  icon={<Flame size={14} className="text-accent" strokeWidth={1.75} />}
                 />
               </div>
 
-              {/* Subject progress */}
+              {/* Subject Progress */}
               {stats.subjectStats.length > 0 && (
-                <div className="glass-card p-6">
-                  <h3 className="text-sm font-medium text-text-primary mb-5">Subject Progress</h3>
+                <div className="bg-bg-surface border border-border rounded-lg p-5">
+                  <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider mb-4">Subject Progress</h3>
                   <div className="space-y-4">
                     {stats.subjectStats.map(s => (
                       <ProgressBar
@@ -107,32 +96,32 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Weak areas */}
+              {/* Weak Areas */}
               {stats.weakAreas.length > 0 && (
-                <div className="glass-card p-6">
-                  <div className="flex items-center gap-2 mb-5">
-                    <AlertTriangle size={16} className="text-warning" />
-                    <h3 className="text-sm font-medium text-text-primary">Weak Areas</h3>
+                <div className="bg-bg-surface border border-border rounded-lg p-5">
+                  <div className="flex items-center gap-1.5 mb-4">
+                    <AlertTriangle size={13} className="text-warning" />
+                    <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">Weak Areas</h3>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-1">
                     {stats.weakAreas.map((area, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-bg-elevated/50"
+                        className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
                       >
                         <div>
-                          <p className="text-sm font-medium text-text-primary">{area.topic}</p>
-                          <p className="text-xs text-text-muted">{area.subject}</p>
+                          <p className="text-[13px] font-medium text-text-primary">{area.topic}</p>
+                          <p className="text-[11px] text-text-faint">{area.subject}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-error">
+                          <span className="text-[12px] font-medium text-error">
                             {Math.round(area.avgScore)}%
                           </span>
                           <Link
-                            href={`/quiz`}
-                            className="flex items-center gap-1 text-xs text-accent-2 hover:underline"
+                            href="/quiz"
+                            className="flex items-center gap-1 text-[11px] text-accent-light hover:underline"
                           >
-                            Practice <ArrowRight size={12} />
+                            Practice <ArrowRight size={10} />
                           </Link>
                         </div>
                       </div>
@@ -141,24 +130,24 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Recent activity */}
+              {/* Recent Quizzes */}
               {stats.recentQuizzes.length > 0 && (
-                <div className="glass-card p-6">
-                  <h3 className="text-sm font-medium text-text-primary mb-5">Recent Quizzes</h3>
-                  <div className="space-y-3">
+                <div className="bg-bg-surface border border-border rounded-lg p-5">
+                  <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider mb-4">Recent Quizzes</h3>
+                  <div className="space-y-1">
                     {stats.recentQuizzes.map(quiz => (
                       <div
                         key={quiz.id}
-                        className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-bg-elevated/50"
+                        className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
                       >
                         <div>
-                          <p className="text-sm font-medium text-text-primary">{quiz.topic}</p>
-                          <p className="text-xs text-text-muted">
+                          <p className="text-[13px] font-medium text-text-primary">{quiz.topic}</p>
+                          <p className="text-[11px] text-text-faint">
                             {quiz.subject} · {new Date(quiz.date).toLocaleDateString()}
                           </p>
                         </div>
                         <span
-                          className={`text-sm font-semibold ${
+                          className={`text-[12px] font-medium ${
                             quiz.score / quiz.total >= 0.7
                               ? 'text-success'
                               : quiz.score / quiz.total >= 0.5

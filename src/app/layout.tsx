@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "StudyBuddy AI - CBSE Class 12",
@@ -12,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="font-sans antialiased bg-bg-base text-text-primary min-h-screen">
+    <html lang="en" className={`dark ${inter.variable}`}>
+      <body className={`${inter.className} antialiased bg-bg-base text-text-primary min-h-screen`}>
         <div className="page-glow" />
         <div className="flex min-h-screen relative z-10">
           {children}

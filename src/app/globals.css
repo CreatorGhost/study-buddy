@@ -1,173 +1,333 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────
+   Linear Design System — Authentic Recreation
+   Based on Linear's actual UI: near-black backgrounds,
+   monochrome palette, Inter typeface, 8px grid, extreme
+   restraint in color usage, barely-there borders.
+   ───────────────────────────────────────────────────── */
+
 :root {
-  --bg-base: #000212;
-  --bg-surface: #0f1117;
-  --bg-elevated: #1a1b23;
-  --text-primary: #f7f8f8;
-  --text-secondary: #b4bcd0;
-  --text-muted: #858699;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --accent-1: #455EB5;
-  --accent-2: #5643CC;
-  --accent-3: #673FD7;
-  --success: #2ea043;
-  --error: #e5534b;
-  --warning: #d29922;
+  /* Backgrounds — true Linear dark: near-black with a cool undertone */
+  --bg-base: #0a0a0b;
+  --bg-surface: #111113;
+  --bg-elevated: #191a1c;
+  --bg-hover: #1f2023;
+  --bg-inset: #060607;
+
+  /* Text — Linear uses EEEFF1 for primary, then steps down */
+  --text-primary: #eeeff1;
+  --text-secondary: #9b9ca0;
+  --text-muted: #5e5f63;
+  --text-faint: #3a3b3e;
+
+  /* Borders — ultra subtle, rgba white */
+  --border: rgba(255, 255, 255, 0.055);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(255, 255, 255, 0.16);
+
+  /* Accent — Linear uses a desaturated blue/indigo. One accent, used sparingly */
+  --accent: #5e6ad2;
+  --accent-light: #8b91e1;
+  --accent-subtle: rgba(94, 106, 210, 0.1);
+  --accent-muted: rgba(94, 106, 210, 0.18);
+
+  /* Semantic */
+  --success: #4cc38a;
+  --success-subtle: rgba(76, 195, 138, 0.1);
+  --error: #e5484d;
+  --error-subtle: rgba(229, 72, 77, 0.1);
+  --warning: #f5a623;
+  --warning-subtle: rgba(245, 166, 35, 0.1);
+
+  /* Spacing scale — 8px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius — Linear uses tight radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 }
 
 @theme inline {
   --color-bg-base: var(--bg-base);
   --color-bg-surface: var(--bg-surface);
   --color-bg-elevated: var(--bg-elevated);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-inset: var(--bg-inset);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
   --color-border: var(--border);
   --color-border-hover: var(--border-hover);
-  --color-accent-1: var(--accent-1);
-  --color-accent-2: var(--accent-2);
-  --color-accent-3: var(--accent-3);
+  --color-border-active: var(--border-active);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-muted: var(--accent-muted);
   --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
   --color-error: var(--error);
+  --color-error-subtle: var(--error-subtle);
   --color-warning: var(--warning);
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-warning-subtle: var(--warning-subtle);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
+/* ─────────────────────────────────────────────────────
+   Base Reset & Scrollbar
+   ───────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.04) transparent;
 }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.04); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.08); }
 
-*::-webkit-scrollbar {
-  width: 6px;
-}
-
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+::selection {
+  background: var(--accent-muted);
+  color: var(--text-primary);
 }
 
 body {
   background: var(--bg-base);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Linear Design Utilities */
-.text-gradient {
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* ─────────────────────────────────────────────────────
+   Page Background — subtle gradient glow (Linear-style)
+   Very restrained: barely visible radial from center-top
+   ───────────────────────────────────────────────────── */
+.page-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(94, 106, 210, 0.04) 0%, transparent 60%);
 }
 
+/* ─────────────────────────────────────────────────────
+   Surfaces & Cards
+   Linear cards: barely-there borders, no heavy shadows,
+   no glassmorphism abuse. Clean, flat, subtle.
+   ───────────────────────────────────────────────────── */
 .glass-card {
-  background: rgba(15, 17, 23, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .glass-card:hover {
   border-color: var(--border-hover);
 }
 
-.page-glow {
-  position: fixed;
-  top: -40%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 60%;
-  background: radial-gradient(ellipse, rgba(86, 67, 204, 0.12) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+/* ─────────────────────────────────────────────────────
+   Accent & Text Gradients
+   ───────────────────────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .accent-gradient {
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
 }
 
 .accent-glow {
-  box-shadow: 0 0 20px rgba(86, 67, 204, 0.3), 0 0 40px rgba(86, 67, 204, 0.1);
+  box-shadow: 0 0 12px rgba(94, 106, 210, 0.2), 0 0 40px rgba(94, 106, 210, 0.06);
 }
 
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* ─────────────────────────────────────────────────────
+   Animations — Linear uses very fast, subtle transitions
+   100–200ms, ease-out, minimal movement distances
+   ───────────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease forwards;
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeIn 200ms ease-out forwards;
+  opacity: 0;
 }
 
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-
-/* Mermaid dark theme overrides */
-.mermaid {
-  font-family: 'Inter', sans-serif !important;
+.animate-fade-in-up {
+  animation: fadeInUp 350ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  opacity: 0;
 }
 
-.mermaid svg {
-  max-width: 100%;
+.animate-slide-in {
+  animation: slideIn 250ms ease-out forwards;
+  opacity: 0;
 }
 
-/* KaTeX overrides */
-.katex {
-  font-size: 1.1em;
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+
+/* ─────────────────────────────────────────────────────
+   Buttons — Linear: small, tight, subtle
+   ───────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 20px;
+  color: white;
+  background: var(--accent);
+  border: none;
+  transition: background 150ms ease, opacity 150ms ease;
+  cursor: pointer;
 }
 
-.katex-display {
-  margin: 1em 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+.btn-primary:hover {
+  background: var(--accent-light);
 }
 
-/* Flashcard flip */
-.flip-card {
-  perspective: 1000px;
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  background: transparent;
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: var(--bg-elevated);
+}
+
+/* ─────────────────────────────────────────────────────
+   Form Inputs — clean, no fuss
+   ───────────────────────────────────────────────────── */
+.input-base {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-primary);
+  transition: border-color 150ms ease;
+}
+
+.input-base::placeholder { color: var(--text-muted); }
+.input-base:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+   Chips / Badges — tight, label-like
+   ───────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.01em;
+}
+
+.chip-accent {
+  background: var(--accent-subtle);
+  color: var(--accent-light);
+}
+
+.chip-success {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.chip-error {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+
+.chip-warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+/* ─────────────────────────────────────────────────────
+   Mermaid & KaTeX
+   ───────────────────────────────────────────────────── */
+.mermaid { font-family: 'Inter', sans-serif !important; }
+.mermaid svg { max-width: 100%; }
+.katex { font-size: 1.05em; }
+.katex-display { margin: 1em 0; overflow-x: auto; overflow-y: hidden; }
+
+/* ─────────────────────────────────────────────────────
+   Flashcard Flip
+   ───────────────────────────────────────────────────── */
+.flip-card { perspective: 1200px; }
 
 .flip-card-inner {
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 500ms cubic-bezier(0.25, 0.1, 0.25, 1);
   transform-style: preserve-3d;
 }
 
-.flip-card-inner.flipped {
-  transform: rotateY(180deg);
-}
+.flip-card-inner.flipped { transform: rotateY(180deg); }
 
 .flip-card-front,
 .flip-card-back {
@@ -175,21 +335,42 @@ body {
   -webkit-backface-visibility: hidden;
 }
 
-.flip-card-back {
-  transform: rotateY(180deg);
+.flip-card-back { transform: rotateY(180deg); }
+
+/* ─────────────────────────────────────────────────────
+   Typing Indicator
+   ───────────────────────────────────────────────────── */
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 0.8; }
 }
 
-/* Markdown content styling */
+.typing-indicator span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 150ms; }
+.typing-indicator span:nth-child(3) { animation-delay: 300ms; }
+
+/* ─────────────────────────────────────────────────────
+   Markdown Prose — clean reading experience
+   ───────────────────────────────────────────────────── */
 .prose-study h1, .prose-study h2, .prose-study h3 {
   color: var(--text-primary);
   font-weight: 600;
-  margin-top: 1.2em;
+  letter-spacing: -0.01em;
+  margin-top: 1.25em;
   margin-bottom: 0.5em;
 }
 
-.prose-study h1 { font-size: 1.5em; }
-.prose-study h2 { font-size: 1.25em; }
-.prose-study h3 { font-size: 1.1em; }
+.prose-study h1 { font-size: 1.25em; }
+.prose-study h2 { font-size: 1.125em; }
+.prose-study h3 { font-size: 1em; }
 
 .prose-study p {
   color: var(--text-secondary);
@@ -199,70 +380,86 @@ body {
 
 .prose-study ul, .prose-study ol {
   color: var(--text-secondary);
-  margin-left: 1.5em;
+  margin-left: 1.25em;
   margin-bottom: 0.75em;
+  line-height: 1.7;
 }
 
-.prose-study li {
-  margin-bottom: 0.25em;
-}
+.prose-study li { margin-bottom: 0.25em; }
+.prose-study li::marker { color: var(--text-faint); }
 
 .prose-study strong {
   color: var(--text-primary);
   font-weight: 600;
 }
 
+.prose-study em { color: var(--text-secondary); }
+
 .prose-study code {
   background: var(--bg-elevated);
-  padding: 0.15em 0.4em;
-  border-radius: 4px;
-  font-size: 0.9em;
-  color: #c9b4f7;
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85em;
+  font-family: var(--font-mono);
+  color: var(--accent-light);
 }
 
 .prose-study pre {
-  background: var(--bg-elevated);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1em;
+  border-radius: var(--radius-lg);
+  padding: 16px;
   overflow-x: auto;
-  margin-bottom: 1em;
+  margin-bottom: 0.75em;
 }
 
 .prose-study pre code {
   background: none;
+  border: none;
   padding: 0;
-  font-size: 0.85em;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
 .prose-study blockquote {
-  border-left: 3px solid var(--accent-2);
-  padding-left: 1em;
-  margin-left: 0;
+  border-left: 2px solid var(--border-active);
+  padding-left: 16px;
+  margin: 1em 0;
   color: var(--text-muted);
-  font-style: italic;
 }
 
 .prose-study a {
-  color: var(--accent-2);
-  text-decoration: underline;
+  color: var(--accent-light);
+  text-decoration: none;
 }
+
+.prose-study a:hover { text-decoration: underline; }
 
 .prose-study table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1em;
+  margin: 0.75em 0;
+  font-size: 13px;
 }
 
 .prose-study th, .prose-study td {
   border: 1px solid var(--border);
-  padding: 0.5em 0.75em;
+  padding: 8px 12px;
   text-align: left;
 }
 
 .prose-study th {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.prose-study hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
 }

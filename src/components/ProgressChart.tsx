@@ -8,23 +8,20 @@ interface ProgressBarProps {
   subtitle?: string;
 }
 
-export function ProgressBar({ label, value, max = 100, subtitle, color }: ProgressBarProps) {
+export function ProgressBar({ label, value, max = 100, subtitle }: ProgressBarProps) {
   const percentage = Math.min((value / max) * 100, 100);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-text-primary">{label}</span>
-        <span className="text-sm text-text-muted">{Math.round(percentage)}%</span>
+        <span className="text-[13px] font-medium text-text-primary">{label}</span>
+        <span className="text-[12px] text-text-muted">{Math.round(percentage)}%</span>
       </div>
-      {subtitle && <span className="text-xs text-text-muted">{subtitle}</span>}
-      <div className="h-2 bg-bg-elevated rounded-full overflow-hidden">
+      {subtitle && <span className="text-[11px] text-text-faint">{subtitle}</span>}
+      <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${percentage}%`,
-            background: color || 'linear-gradient(90deg, #455EB5, #5643CC, #673FD7)',
-          }}
+          className="h-full rounded-full bg-accent transition-all duration-500"
+          style={{ width: `${percentage}%` }}
         />
       </div>
     </div>
@@ -40,17 +37,17 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon, trend }: StatCardProps) {
   return (
-    <div className="glass-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="w-9 h-9 rounded-lg bg-accent-2/10 flex items-center justify-center">
+    <div className="bg-bg-surface border border-border rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="w-7 h-7 rounded-md bg-accent-subtle flex items-center justify-center">
           {icon}
         </div>
         {trend && (
-          <span className="text-xs text-success font-medium">{trend}</span>
+          <span className="text-[11px] text-success font-medium">{trend}</span>
         )}
       </div>
-      <p className="text-2xl font-bold text-text-primary">{value}</p>
-      <p className="text-xs text-text-muted mt-1">{label}</p>
+      <p className="text-xl font-semibold text-text-primary">{value}</p>
+      <p className="text-[11px] text-text-muted mt-0.5">{label}</p>
     </div>
   );
 }

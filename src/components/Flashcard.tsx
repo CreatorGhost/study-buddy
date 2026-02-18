@@ -14,49 +14,46 @@ export default function Flashcard({ card, onMark }: FlashcardProps) {
 
   return (
     <div className="w-full max-w-lg mx-auto">
-      {/* Card */}
       <div
-        className="flip-card w-full h-[280px] cursor-pointer"
+        className="flip-card w-full h-[240px] cursor-pointer"
         onClick={() => setIsFlipped(!isFlipped)}
       >
         <div className={`flip-card-inner w-full h-full relative ${isFlipped ? 'flipped' : ''}`}>
           {/* Front */}
-          <div className="flip-card-front absolute inset-0 glass-card p-8 flex flex-col items-center justify-center">
-            <span className="text-[10px] font-medium text-accent-2 mb-4 uppercase tracking-wider">
+          <div className="flip-card-front absolute inset-0 bg-bg-surface border border-border rounded-lg p-6 flex flex-col items-center justify-center">
+            <span className="text-[10px] font-medium text-text-faint mb-3 uppercase tracking-wider">
               Question
             </span>
-            <p className="text-lg font-medium text-text-primary text-center leading-relaxed">
+            <p className="text-[14px] font-medium text-text-primary text-center leading-relaxed">
               {card.front}
             </p>
-            <span className="text-xs text-text-muted mt-6">Tap to reveal answer</span>
+            <span className="text-[11px] text-text-faint mt-4">Click to reveal</span>
           </div>
 
           {/* Back */}
-          <div className="flip-card-back absolute inset-0 glass-card p-8 flex flex-col items-center justify-center border-accent-2/20">
-            <span className="text-[10px] font-medium text-accent-3 mb-4 uppercase tracking-wider">
+          <div className="flip-card-back absolute inset-0 bg-bg-surface border border-border-hover rounded-lg p-6 flex flex-col items-center justify-center">
+            <span className="text-[10px] font-medium text-accent-light mb-3 uppercase tracking-wider">
               Answer
             </span>
-            <p className="text-base text-text-secondary text-center leading-relaxed">
+            <p className="text-[13px] text-text-secondary text-center leading-relaxed">
               {card.back}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Action buttons (shown when flipped) */}
       {isFlipped && (
-        <div className="flex items-center justify-center gap-3 mt-4 animate-fade-in">
+        <div className="flex items-center justify-center gap-2 mt-4 animate-fade-in">
           <button
             onClick={e => {
               e.stopPropagation();
               onMark(card.id, 'review');
               setIsFlipped(false);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-error/30
-                       text-sm font-medium text-error hover:bg-error/10 transition-all"
+            className="btn-ghost text-error border-error/20 hover:bg-error-subtle"
           >
-            <RotateCcw size={16} />
-            Need Review
+            <RotateCcw size={13} />
+            Review
           </button>
           <button
             onClick={e => {
@@ -64,11 +61,10 @@ export default function Flashcard({ card, onMark }: FlashcardProps) {
               onMark(card.id, 'got-it');
               setIsFlipped(false);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-success/30
-                       text-sm font-medium text-success hover:bg-success/10 transition-all"
+            className="btn-ghost text-success border-success/20 hover:bg-success-subtle"
           >
-            <Check size={16} />
-            Got It
+            <Check size={13} />
+            Got it
           </button>
         </div>
       )}

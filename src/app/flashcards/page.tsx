@@ -6,7 +6,7 @@ import SubjectSelector from '@/components/SubjectSelector';
 import Flashcard from '@/components/Flashcard';
 import { Subject, FlashcardData, FlashcardDeck } from '@/types';
 import { getFlashcardDecks, saveFlashcardDeck, deleteFlashcardDeck } from '@/lib/storage';
-import { CreditCard, Loader2, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Layers, Loader2, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Phase = 'home' | 'generate' | 'loading' | 'review';
 
@@ -82,9 +82,8 @@ export default function FlashcardsPage() {
     saveFlashcardDeck(updatedDeck);
     setDecks(getFlashcardDecks());
 
-    // Auto-advance to next card
     if (currentCardIndex < updatedCards.length - 1) {
-      setTimeout(() => setCurrentCardIndex(prev => prev + 1), 300);
+      setTimeout(() => setCurrentCardIndex(prev => prev + 1), 250);
     }
   };
 
@@ -98,7 +97,6 @@ export default function FlashcardsPage() {
   };
 
   const openDeck = (deck: FlashcardDeck) => {
-    // Prioritize cards that need review
     const sortedCards = [...deck.cards].sort((a, b) => {
       if (a.status === 'review' && b.status !== 'review') return -1;
       if (a.status !== 'review' && b.status === 'review') return 1;
@@ -120,67 +118,62 @@ export default function FlashcardsPage() {
     <>
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div>
-            <h1 className="text-lg font-semibold text-text-primary">Flashcards</h1>
-            <p className="text-xs text-text-muted">Generate & review study cards</p>
-          </div>
+        <header className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
+          <h1 className="text-[13px] font-semibold text-text-primary">Flashcards</h1>
           {phase !== 'home' && phase !== 'loading' && (
             <button
               onClick={() => { setPhase('home'); setActiveDeck(null); }}
-              className="text-xs text-text-muted hover:text-text-primary transition-colors"
+              className="text-[12px] text-text-muted hover:text-text-primary transition-colors"
             >
               Back to decks
             </button>
           )}
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          {/* Home - deck list */}
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          {/* Home */}
           {phase === 'home' && (
-            <div className="max-w-2xl mx-auto animate-fade-in-up">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-base font-medium text-text-primary">Your Decks</h2>
+            <div className="max-w-xl mx-auto animate-fade-in-up">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-[14px] font-medium text-text-primary">Your Decks</h2>
                 <button
                   onClick={() => setPhase('generate')}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg accent-gradient text-sm
-                             font-medium text-white hover:accent-glow transition-all"
+                  className="btn-primary"
                 >
-                  <Plus size={16} />
+                  <Plus size={13} />
                   New Deck
                 </button>
               </div>
 
               {decks.length === 0 ? (
                 <div className="text-center py-16">
-                  <div className="w-14 h-14 rounded-2xl accent-gradient flex items-center justify-center mx-auto mb-4 accent-glow">
-                    <CreditCard size={24} className="text-white" />
-                  </div>
-                  <h3 className="text-lg font-medium text-text-primary mb-2">No flashcard decks yet</h3>
-                  <p className="text-sm text-text-muted mb-6">
+                  <Layers size={24} className="text-text-faint mx-auto mb-3" strokeWidth={1.5} />
+                  <h3 className="text-[14px] font-medium text-text-primary mb-1">No decks yet</h3>
+                  <p className="text-[12px] text-text-muted mb-5">
                     Create your first deck to start reviewing
                   </p>
                   <button
                     onClick={() => setPhase('generate')}
-                    className="px-4 py-2 rounded-lg accent-gradient text-sm font-medium text-white hover:accent-glow transition-all"
+                    className="btn-primary"
                   >
                     Generate Flashcards
                   </button>
                 </div>
               ) : (
-                <div className="grid gap-3">
+                <div className="space-y-1">
                   {decks.map(deck => (
                     <div
                       key={deck.id}
-                      className="glass-card p-4 flex items-center justify-between group cursor-pointer"
+                      className="flex items-center justify-between px-3 py-3 -mx-3 rounded-md
+                                 hover:bg-bg-surface group cursor-pointer transition-colors duration-100"
                       onClick={() => openDeck(deck)}
                     >
                       <div>
-                        <h3 className="text-sm font-medium text-text-primary">{deck.topic}</h3>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-text-muted">{deck.subject}</span>
-                          <span className="text-xs text-text-muted">{deck.cards.length} cards</span>
-                          <span className="text-xs text-success">
+                        <p className="text-[13px] font-medium text-text-primary">{deck.topic}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] text-text-muted">{deck.subject}</span>
+                          <span className="text-[11px] text-text-faint">{deck.cards.length} cards</span>
+                          <span className="text-[11px] text-success">
                             {deck.cards.filter(c => c.status === 'got-it').length} mastered
                           </span>
                         </div>
@@ -190,9 +183,9 @@ export default function FlashcardsPage() {
                           e.stopPropagation();
                           handleDeleteDeck(deck.id);
                         }}
-                        className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-error/10 text-text-muted hover:text-error transition-all"
+                        className="p-1.5 rounded opacity-0 group-hover:opacity-100 text-text-faint hover:text-error transition-all"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   ))}
@@ -201,50 +194,47 @@ export default function FlashcardsPage() {
             </div>
           )}
 
-          {/* Generate phase */}
+          {/* Generate */}
           {phase === 'generate' && (
-            <div className="max-w-lg mx-auto space-y-6 animate-fade-in-up">
-              <div className="text-center mb-4">
-                <h2 className="text-xl font-semibold text-text-primary">Generate Flashcards</h2>
-                <p className="text-sm text-text-muted mt-1">Enter a topic or paste your notes</p>
+            <div className="max-w-md mx-auto space-y-5 animate-fade-in-up">
+              <div className="mb-4">
+                <h2 className="text-[15px] font-medium text-text-primary mb-1">Generate Flashcards</h2>
+                <p className="text-[12px] text-text-muted">Enter a topic or paste your notes</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">Subject</label>
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">Subject</label>
                 <SubjectSelector value={subject} onChange={setSubject} variant="chips" />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">Topic</label>
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">Topic</label>
                 <input
                   type="text"
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
                   placeholder="e.g., Cell Biology, Thermodynamics..."
-                  className="w-full bg-bg-elevated border border-border rounded-lg px-4 py-3 text-sm
-                             text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-2"
+                  className="input-base"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">
-                  Notes <span className="text-text-muted font-normal">(optional)</span>
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">
+                  Notes <span className="text-text-faint font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="Paste your notes here to generate flashcards from them..."
-                  rows={6}
-                  className="w-full bg-bg-elevated border border-border rounded-lg px-4 py-3 text-sm
-                             text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-2 resize-none"
+                  placeholder="Paste your notes here..."
+                  rows={5}
+                  className="input-base resize-none"
                 />
               </div>
 
               <button
                 onClick={handleGenerate}
                 disabled={!topic.trim()}
-                className="w-full py-3 rounded-lg accent-gradient text-white font-medium
-                           hover:accent-glow transition-all disabled:opacity-40"
+                className="btn-primary w-full justify-center py-2.5"
               >
                 Generate Cards
               </button>
@@ -254,47 +244,44 @@ export default function FlashcardsPage() {
           {/* Loading */}
           {phase === 'loading' && (
             <div className="flex flex-col items-center justify-center h-full animate-fade-in">
-              <Loader2 size={40} className="text-accent-2 animate-spin mb-4" />
-              <p className="text-sm text-text-muted">Generating flashcards...</p>
+              <Loader2 size={24} className="text-accent animate-spin mb-3" />
+              <p className="text-[13px] text-text-muted">Generating flashcards...</p>
             </div>
           )}
 
           {/* Review */}
           {phase === 'review' && activeDeck && currentCard && (
             <div className="max-w-lg mx-auto animate-fade-in-up">
-              {/* Stats */}
-              <div className="flex items-center justify-center gap-6 mb-6">
-                <span className="text-xs text-text-muted">
+              <div className="flex items-center justify-center gap-4 mb-5">
+                <span className="text-[11px] text-text-muted">
                   {currentCardIndex + 1} / {activeDeck.cards.length}
                 </span>
-                <span className="text-xs text-success">{gotItCount} mastered</span>
-                <span className="text-xs text-error">{reviewCount} to review</span>
+                <span className="text-[11px] text-success">{gotItCount} mastered</span>
+                <span className="text-[11px] text-error">{reviewCount} to review</span>
               </div>
 
-              {/* Card */}
               <Flashcard card={currentCard} onMark={handleMark} />
 
-              {/* Navigation */}
-              <div className="flex items-center justify-between mt-8">
+              <div className="flex items-center justify-between mt-6">
                 <button
                   onClick={() => setCurrentCardIndex(Math.max(0, currentCardIndex - 1))}
                   disabled={currentCardIndex === 0}
-                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-muted
-                             hover:text-text-primary disabled:opacity-30 transition-all"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[12px] text-text-muted
+                             hover:text-text-primary disabled:opacity-25 transition-colors"
                 >
-                  <ChevronLeft size={16} />
-                  Previous
+                  <ChevronLeft size={14} />
+                  Prev
                 </button>
                 <button
                   onClick={() =>
                     setCurrentCardIndex(Math.min(activeDeck.cards.length - 1, currentCardIndex + 1))
                   }
                   disabled={currentCardIndex === activeDeck.cards.length - 1}
-                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-muted
-                             hover:text-text-primary disabled:opacity-30 transition-all"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[12px] text-text-muted
+                             hover:text-text-primary disabled:opacity-25 transition-colors"
                 >
                   Next
-                  <ChevronRight size={16} />
+                  <ChevronRight size={14} />
                 </button>
               </div>
             </div>

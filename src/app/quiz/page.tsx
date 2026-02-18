@@ -7,7 +7,7 @@ import QuizCard from '@/components/QuizCard';
 import QuizResults from '@/components/QuizResults';
 import { Subject, QuizQuestion, QuizConfig, Difficulty, QuestionType } from '@/types';
 import { saveQuizResult } from '@/lib/storage';
-import { Brain, ChevronLeft, ChevronRight, Loader2, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Play } from 'lucide-react';
 
 type Phase = 'setup' | 'loading' | 'taking' | 'results';
 
@@ -89,57 +89,47 @@ export default function QuizPage() {
     <>
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div>
-            <h1 className="text-lg font-semibold text-text-primary">Quiz</h1>
-            <p className="text-xs text-text-muted">Test your knowledge</p>
-          </div>
+        <header className="flex items-center px-4 h-12 border-b border-border shrink-0">
+          <h1 className="text-[13px] font-semibold text-text-primary">Quiz</h1>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          {/* Setup Phase */}
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          {/* Setup */}
           {phase === 'setup' && (
-            <div className="max-w-lg mx-auto space-y-6 animate-fade-in-up">
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-2xl accent-gradient flex items-center justify-center mx-auto mb-4 accent-glow">
-                  <Brain size={24} className="text-white" />
-                </div>
-                <h2 className="text-xl font-semibold text-text-primary">Create a Quiz</h2>
-                <p className="text-sm text-text-muted mt-1">Configure your assessment</p>
+            <div className="max-w-md mx-auto space-y-5 animate-fade-in-up">
+              <div className="mb-6">
+                <h2 className="text-[15px] font-medium text-text-primary mb-1">Create a Quiz</h2>
+                <p className="text-[12px] text-text-muted">Configure your assessment</p>
               </div>
 
-              {/* Subject */}
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">Subject</label>
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">Subject</label>
                 <SubjectSelector value={subject} onChange={setSubject} variant="chips" />
               </div>
 
-              {/* Topic */}
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">Topic</label>
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">Topic</label>
                 <input
                   type="text"
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
                   placeholder="e.g., Electromagnetic Induction, Organic Chemistry..."
-                  className="w-full bg-bg-elevated border border-border rounded-lg px-4 py-3 text-sm
-                             text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-2"
+                  className="input-base"
                 />
               </div>
 
-              {/* Number of questions */}
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">
                   Questions: {numQuestions}
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   {[5, 10, 15].map(n => (
                     <button
                       key={n}
                       onClick={() => setNumQuestions(n)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all
+                      className={`flex-1 py-2 rounded-md text-[12px] font-medium transition-colors duration-100
                         ${numQuestions === n
-                          ? 'accent-gradient text-white'
+                          ? 'bg-accent text-white'
                           : 'bg-bg-elevated border border-border text-text-muted hover:text-text-secondary'
                         }`}
                     >
@@ -149,17 +139,16 @@ export default function QuizPage() {
                 </div>
               </div>
 
-              {/* Difficulty */}
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">Difficulty</label>
-                <div className="flex gap-2">
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">Difficulty</label>
+                <div className="flex gap-1.5">
                   {(['easy', 'medium', 'hard'] as Difficulty[]).map(d => (
                     <button
                       key={d}
                       onClick={() => setDifficulty(d)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-all
+                      className={`flex-1 py-2 rounded-md text-[12px] font-medium capitalize transition-colors duration-100
                         ${difficulty === d
-                          ? 'accent-gradient text-white'
+                          ? 'bg-accent text-white'
                           : 'bg-bg-elevated border border-border text-text-muted hover:text-text-secondary'
                         }`}
                     >
@@ -169,10 +158,9 @@ export default function QuizPage() {
                 </div>
               </div>
 
-              {/* Question Type */}
               <div>
-                <label className="text-sm font-medium text-text-primary mb-2 block">Question Type</label>
-                <div className="flex gap-2">
+                <label className="text-[12px] font-medium text-text-secondary mb-2 block">Type</label>
+                <div className="flex gap-1.5">
                   {([
                     { value: 'mcq', label: 'MCQ' },
                     { value: 'assertion-reasoning', label: 'Assert-Reason' },
@@ -181,9 +169,9 @@ export default function QuizPage() {
                     <button
                       key={t.value}
                       onClick={() => setQuestionType(t.value)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all
+                      className={`flex-1 py-2 rounded-md text-[12px] font-medium transition-colors duration-100
                         ${questionType === t.value
-                          ? 'accent-gradient text-white'
+                          ? 'bg-accent text-white'
                           : 'bg-bg-elevated border border-border text-text-muted hover:text-text-secondary'
                         }`}
                     >
@@ -196,10 +184,9 @@ export default function QuizPage() {
               <button
                 onClick={generateQuiz}
                 disabled={!topic.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg accent-gradient
-                           text-white font-medium hover:accent-glow transition-all disabled:opacity-40"
+                className="btn-primary w-full justify-center py-2.5"
               >
-                <Play size={18} />
+                <Play size={14} />
                 Start Quiz
               </button>
             </div>
@@ -208,25 +195,25 @@ export default function QuizPage() {
           {/* Loading */}
           {phase === 'loading' && (
             <div className="flex flex-col items-center justify-center h-full animate-fade-in">
-              <Loader2 size={40} className="text-accent-2 animate-spin mb-4" />
-              <p className="text-sm text-text-muted">Generating your quiz...</p>
+              <Loader2 size={24} className="text-accent animate-spin mb-3" />
+              <p className="text-[13px] text-text-muted">Generating your quiz...</p>
             </div>
           )}
 
-          {/* Taking Quiz */}
+          {/* Taking */}
           {phase === 'taking' && questions.length > 0 && (
-            <div className="max-w-2xl mx-auto">
-              {/* Progress bar */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-text-muted">Progress</span>
-                  <span className="text-xs text-text-muted">
-                    {Object.keys(answers).length}/{questions.length} answered
+            <div className="max-w-xl mx-auto">
+              {/* Progress */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-text-muted">Progress</span>
+                  <span className="text-[11px] text-text-muted">
+                    {Object.keys(answers).length}/{questions.length}
                   </span>
                 </div>
-                <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden">
+                <div className="h-1 bg-bg-elevated rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full accent-gradient transition-all duration-300"
+                    className="h-full rounded-full bg-accent transition-all duration-300"
                     style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
                   />
                 </div>
@@ -240,29 +227,29 @@ export default function QuizPage() {
                 onAnswer={handleAnswer}
               />
 
-              {/* Navigation */}
-              <div className="flex items-center justify-between mt-6">
+              {/* Nav */}
+              <div className="flex items-center justify-between mt-5">
                 <button
                   onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                   disabled={currentIndex === 0}
-                  className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-muted
-                             hover:text-text-primary disabled:opacity-30 transition-all"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[12px] text-text-muted
+                             hover:text-text-primary disabled:opacity-25 transition-colors"
                 >
-                  <ChevronLeft size={16} />
-                  Previous
+                  <ChevronLeft size={14} />
+                  Prev
                 </button>
 
-                <div className="flex gap-1.5">
+                <div className="flex gap-1">
                   {questions.map((q, i) => (
                     <button
                       key={q.id}
                       onClick={() => setCurrentIndex(i)}
-                      className={`w-7 h-7 rounded-md text-xs font-medium transition-all
+                      className={`w-6 h-6 rounded text-[11px] font-medium transition-colors
                         ${i === currentIndex
-                          ? 'accent-gradient text-white'
+                          ? 'bg-accent text-white'
                           : answers[q.id]
-                          ? 'bg-accent-2/20 text-accent-2'
-                          : 'bg-bg-elevated text-text-muted'
+                          ? 'bg-accent-subtle text-accent-light'
+                          : 'bg-bg-elevated text-text-faint'
                         }`}
                     >
                       {i + 1}
@@ -273,18 +260,17 @@ export default function QuizPage() {
                 {currentIndex < questions.length - 1 ? (
                   <button
                     onClick={() => setCurrentIndex(currentIndex + 1)}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-muted
-                               hover:text-text-primary transition-all"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[12px] text-text-muted
+                               hover:text-text-primary transition-colors"
                   >
                     Next
-                    <ChevronRight size={16} />
+                    <ChevronRight size={14} />
                   </button>
                 ) : (
                   <button
                     onClick={submitQuiz}
                     disabled={Object.keys(answers).length < questions.length}
-                    className="px-4 py-2 rounded-lg accent-gradient text-sm font-medium text-white
-                               hover:accent-glow transition-all disabled:opacity-40"
+                    className="btn-primary"
                   >
                     Submit
                   </button>
@@ -295,17 +281,15 @@ export default function QuizPage() {
 
           {/* Results */}
           {phase === 'results' && showResult && (
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className="max-w-xl mx-auto space-y-5">
               <QuizResults
                 questions={questions}
                 answers={answers}
                 onRetryWrong={retryWrong}
                 onNewQuiz={newQuiz}
               />
-
-              {/* Individual question review */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-text-muted">Review Answers</h3>
+              <div className="space-y-3">
+                <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">Review</h3>
                 {questions.map((q, i) => (
                   <QuizCard
                     key={q.id}

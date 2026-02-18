@@ -8,14 +8,14 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Message, AgentType } from '@/types';
 import MermaidDiagram from './MermaidDiagram';
-import { User, Bot, BookOpen, Brain, GitBranch, CreditCard } from 'lucide-react';
+import { User, Bot, BookOpen, Brain, GitBranch, Layers } from 'lucide-react';
 
 const agentBadge: Record<AgentType, { label: string; icon: typeof Bot }> = {
   orchestrator: { label: 'AI', icon: Bot },
   tutor: { label: 'Tutor', icon: BookOpen },
   quiz: { label: 'Quiz', icon: Brain },
   diagram: { label: 'Diagram', icon: GitBranch },
-  flashcard: { label: 'Flashcard', icon: CreditCard },
+  flashcard: { label: 'Flashcard', icon: Layers },
 };
 
 interface ChatMessageProps {
@@ -27,8 +27,6 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
   const isUser = message.role === 'user';
   const badge = message.agent ? agentBadge[message.agent] : null;
 
-  // Check which mermaid blocks are complete (have closing ```)
-  // Only render complete blocks as diagrams; incomplete ones show as raw code
   const completeMermaidBlocks = useMemo(() => {
     const set = new Set<string>();
     const regex = /```mermaid\n([\s\S]*?)```/g;
@@ -42,23 +40,23 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg accent-gradient flex items-center justify-center mt-1">
-          {badge ? <badge.icon size={16} className="text-white" /> : <Bot size={16} className="text-white" />}
+        <div className="shrink-0 w-6 h-6 rounded-md bg-bg-elevated border border-border flex items-center justify-center mt-0.5">
+          {badge ? <badge.icon size={12} className="text-text-muted" strokeWidth={1.75} /> : <Bot size={12} className="text-text-muted" strokeWidth={1.75} />}
         </div>
       )}
 
       <div className={`max-w-[75%] ${isUser ? 'order-first' : ''}`}>
         {!isUser && badge && (
-          <span className="text-[11px] font-medium text-accent-2 mb-1 block">
-            {badge.label} Agent
+          <span className="text-[11px] font-medium text-text-muted mb-1 block">
+            {badge.label}
           </span>
         )}
         <div
           className={`
-            rounded-xl px-4 py-3 text-sm leading-relaxed
+            rounded-lg px-3.5 py-2.5 text-[13px] leading-relaxed
             ${isUser
-              ? 'bg-accent-2/20 text-text-primary border border-accent-2/20'
-              : 'bg-bg-surface border border-border'
+              ? 'bg-bg-elevated text-text-primary'
+              : 'bg-transparent'
             }
           `}
         >
@@ -75,25 +73,23 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
                     const content = String(children).replace(/\n$/, '');
 
                     if (match?.[1] === 'mermaid') {
-                      // Only render as diagram if this block is complete
                       if (completeMermaidBlocks.has(content)) {
                         return <MermaidDiagram chart={content} />;
                       }
-                      // Incomplete block during streaming - show as styled code
                       return (
-                        <pre className="bg-bg-elevated border border-border rounded-lg p-4 overflow-x-auto my-3">
-                          <div className="flex items-center gap-2 mb-2 text-xs text-accent-2">
-                            <GitBranch size={12} />
+                        <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2">
+                          <div className="flex items-center gap-1.5 mb-2 text-[11px] text-text-muted">
+                            <GitBranch size={11} />
                             <span>Generating diagram...</span>
                           </div>
-                          <code className="text-text-muted text-xs">{content}</code>
+                          <code className="text-text-faint text-[11px]">{content}</code>
                         </pre>
                       );
                     }
 
                     if (match) {
                       return (
-                        <pre className="bg-bg-elevated border border-border rounded-lg p-4 overflow-x-auto my-3">
+                        <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2">
                           <code className={className} {...props}>
                             {children}
                           </code>
@@ -117,14 +113,14 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
             </div>
           )}
           {isStreaming && (
-            <span className="inline-block w-2 h-4 bg-accent-2 rounded-sm animate-pulse ml-1" />
+            <span className="inline-block w-[3px] h-[14px] bg-text-muted rounded-sm animate-pulse ml-0.5 -mb-0.5" />
           )}
         </div>
       </div>
 
       {isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-bg-elevated border border-border flex items-center justify-center mt-1">
-          <User size={16} className="text-text-muted" />
+        <div className="shrink-0 w-6 h-6 rounded-md bg-bg-elevated border border-border flex items-center justify-center mt-0.5">
+          <User size={12} className="text-text-muted" strokeWidth={1.75} />
         </div>
       )}
     </div>
