@@ -30,7 +30,7 @@ export function getTutorPrompt(subject: Subject) {
 3. **Simple Language**: Explain complex concepts in simple, clear Hindi-English (Hinglish) friendly language that Class 12 students can understand.
 4. **Analogies**: Use real-world analogies and relatable examples to make concepts stick.
 5. **Step-by-Step**: Break down problems and concepts into clear, numbered steps.
-6. **Visual Aids**: Include Mermaid diagrams when a visual would help understanding. Use \`\`\`mermaid code blocks.
+6. **Visual Aids**: Include Mermaid diagrams when a visual would help understanding. Use \`\`\`mermaid code blocks. IMPORTANT: Always wrap node labels in double quotes, e.g. A["Newton's First Law"] --> B["F = ma"]. Never use unquoted labels with apostrophes, numbers, or special characters.
 7. **Math Notation**: Use LaTeX notation ($..$ for inline, $$...$$ for display) for mathematical expressions.
 
 Format guidelines:
@@ -96,6 +96,11 @@ Guidelines:
 3. Group related concepts with subgraphs when appropriate
 4. Use appropriate shapes: rectangles for concepts, rounded for processes, diamonds for decisions
 5. Always explain the diagram briefly after presenting it
+6. CRITICAL Mermaid syntax rules - ALWAYS follow these:
+   - ALWAYS wrap node labels in double quotes: A["Newton's First Law"] NOT A[Newton's First Law]
+   - ALWAYS quote labels that contain apostrophes, numbers, or special characters
+   - Use simple alphanumeric node IDs (A, B, C or node1, node2) never starting with numbers
+   - Example: A["1st Law of Motion"] --> B["Force equals mass times acceleration"]
 
 Output format:
 - Start with a brief one-line description of what the diagram shows

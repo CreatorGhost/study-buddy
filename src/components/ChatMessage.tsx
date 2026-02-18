@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -25,6 +26,18 @@ interface ChatMessageProps {
 export default function ChatMessage({ message, isStreaming }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const badge = message.agent ? agentBadge[message.agent] : null;
+
+  // Check which mermaid blocks are complete (have closing ```)
+  // Only render complete blocks as diagrams; incomplete ones show as raw code
+  const completeMermaidBlocks = useMemo(() => {
+    const set = new Set<string>();
+    const regex = /```mermaid\n([\s\S]*?)```/g;
+    let match;
+    while ((match = regex.exec(message.content)) !== null) {
+      set.add(match[1].replace(/\n$/, ''));
+    }
+    return set;
+  }, [message.content]);
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
@@ -62,7 +75,20 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
                     const content = String(children).replace(/\n$/, '');
 
                     if (match?.[1] === 'mermaid') {
-                      return <MermaidDiagram chart={content} />;
+                      // Only render as diagram if this block is complete
+                      if (completeMermaidBlocks.has(content)) {
+                        return <MermaidDiagram chart={content} />;
+                      }
+                      // Incomplete block during streaming - show as styled code
+                      return (
+                        <pre className="bg-bg-elevated border border-border rounded-lg p-4 overflow-x-auto my-3">
+                          <div className="flex items-center gap-2 mb-2 text-xs text-accent-2">
+                            <GitBranch size={12} />
+                            <span>Generating diagram...</span>
+                          </div>
+                          <code className="text-text-muted text-xs">{content}</code>
+                        </pre>
+                      );
                     }
 
                     if (match) {
