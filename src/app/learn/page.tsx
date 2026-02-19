@@ -34,6 +34,7 @@ export default function LearnPage() {
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messagesRef = useRef<Message[]>([]);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -157,7 +158,7 @@ export default function LearnPage() {
 
     setMessages(prev => [...prev, assistantMessage]);
 
-    let finalMessages = [...newMessages, assistantMessage];
+    messagesRef.current = [...newMessages, assistantMessage];
 
     try {
       const response = await fetch('/api/chat', {
@@ -192,7 +193,7 @@ export default function LearnPage() {
               setActiveAgent(event.agent);
               setMessages(prev => {
                 const updated = prev.map(m => m.id === assistantId ? { ...m, agent: event.agent } : m);
-                finalMessages = updated;
+                messagesRef.current = updated;
                 return updated;
               });
             }
@@ -202,7 +203,7 @@ export default function LearnPage() {
                 const updated = prev.map(m =>
                   m.id === assistantId ? { ...m, content: m.content + event.data } : m
                 );
-                finalMessages = updated;
+                messagesRef.current = updated;
                 return updated;
               });
             }
@@ -210,7 +211,7 @@ export default function LearnPage() {
             if (event.type === 'done') {
               setIsStreaming(false);
               setActiveAgent(null);
-              saveConversation(finalMessages, convId, subject);
+              saveConversation(messagesRef.current, convId, subject);
             }
 
             if (event.type === 'error') {
@@ -220,7 +221,7 @@ export default function LearnPage() {
                     ? { ...m, content: `Something went wrong: ${event.data}` }
                     : m
                 );
-                finalMessages = updated;
+                messagesRef.current = updated;
                 return updated;
               });
               setIsStreaming(false);
@@ -237,7 +238,7 @@ export default function LearnPage() {
             ? { ...m, content: 'Could not connect to the server. Please try again.' }
             : m
         );
-        finalMessages = updated;
+        messagesRef.current = updated;
         return updated;
       });
       setIsStreaming(false);
@@ -249,7 +250,7 @@ export default function LearnPage() {
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
+        <header className="flex items-center justify-between pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <h1 className="text-[13px] font-semibold text-text-primary">Learn</h1>
             {activeAgent && (
@@ -261,26 +262,34 @@ export default function LearnPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className={`p-1.5 rounded-md transition-colors duration-100
+              className={`p-2 rounded-md transition-colors duration-100
                 ${showHistory ? 'bg-bg-hover text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated'}`}
               title="Chat history"
+              aria-label="Toggle chat history"
             >
-              <MessageSquare size={15} strokeWidth={1.75} />
+              <MessageSquare size={16} strokeWidth={1.75} />
             </button>
             <button
               onClick={startNewChat}
-              className="p-1.5 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors duration-100"
+              className="p-2 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors duration-100"
               title="New chat"
+              aria-label="New chat"
             >
-              <Plus size={15} strokeWidth={1.75} />
+              <Plus size={16} strokeWidth={1.75} />
             </button>
           </div>
         </header>
 
         <div className="flex-1 flex overflow-hidden">
           {/* Chat history panel */}
-          {showHistory && (
-            <div className="w-56 border-r border-border bg-bg-surface overflow-y-auto shrink-0 animate-fade-in">
+          <div
+            className={`
+              border-r border-border bg-bg-surface overflow-y-auto shrink-0
+              transition-all duration-250 ease-[cubic-bezier(0.32,0.72,0,1)]
+              ${showHistory ? 'w-56 opacity-100' : 'w-0 opacity-0 overflow-hidden border-r-0'}
+            `}
+          >
+            <div className="w-56">
               <div className="px-3 py-2.5 border-b border-border">
                 <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">History</p>
               </div>
@@ -300,20 +309,21 @@ export default function LearnPage() {
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium truncate">{conv.title}</p>
-                        <p className="text-[11px] text-text-faint">{conv.subject}</p>
+                        <p className="text-[11px] text-text-muted">{conv.subject}</p>
                       </div>
                       <button
                         onClick={e => { e.stopPropagation(); deleteConversation(conv.id); }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-text-faint hover:text-error transition-all"
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-2 rounded text-text-faint hover:text-error transition-all"
+                        aria-label="Delete conversation"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
+          </div>
 
           {/* Main chat area */}
           <div className="flex-1 flex flex-col overflow-hidden">

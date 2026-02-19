@@ -68,13 +68,27 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
 
   const subjectData = indexData.find((s) => s.name === subject);
   const availableYears = subjectData?.years || [];
-  const availableMarks = getMarksForSubject(subject);
+  const availableMarks = subjectData?.markCounts
+    ? Object.keys(subjectData.markCounts).map(Number).sort((a, b) => a - b)
+    : getMarksForSubject(subject);
 
   const toggleYear = (year: number) => {
-    setAllYears(false);
-    setSelectedYears((prev) =>
-      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year]
-    );
+    if (allYears) {
+      // "All" was selected — user wants to deselect this one year
+      setAllYears(false);
+      setSelectedYears(availableYears.filter((y) => y !== year));
+    } else {
+      setSelectedYears((prev) => {
+        const next = prev.includes(year)
+          ? prev.filter((y) => y !== year)
+          : [...prev, year];
+        if (next.length === availableYears.length) {
+          setAllYears(true);
+          return [];
+        }
+        return next;
+      });
+    }
   };
 
   const toggleAllYears = () => {
@@ -88,10 +102,21 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
   };
 
   const toggleMark = (mark: number) => {
-    setAllMarks(false);
-    setSelectedMarks((prev) =>
-      prev.includes(mark) ? prev.filter((m) => m !== mark) : [...prev, mark]
-    );
+    if (allMarks) {
+      setAllMarks(false);
+      setSelectedMarks(availableMarks.filter((m) => m !== mark));
+    } else {
+      setSelectedMarks((prev) => {
+        const next = prev.includes(mark)
+          ? prev.filter((m) => m !== mark)
+          : [...prev, mark];
+        if (next.length === availableMarks.length) {
+          setAllMarks(true);
+          return [];
+        }
+        return next;
+      });
+    }
   };
 
   const toggleAllMarks = () => {
@@ -307,6 +332,11 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
           )}
 
           {/* Start Button */}
+          {!canStart && !indexLoading && !loading && (
+            <p className="text-[11px] text-text-faint text-center">
+              Select at least one year and one marks category to start
+            </p>
+          )}
           <button
             onClick={handleStart}
             disabled={!canStart}

@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-02-19T09:57:49.234Z",
+  "subjects": [
+    {
+      "name": "Physics",
+      "years": [
+        2024,
+        2022,
+        2020,
+        2018,
+        2017,
+        2015,
+        2014
+      ],
+      "markCategories": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "totalPapers": 7,
+      "totalQuestions": 198
+    },
+    {
+      "name": "Chemistry",
+      "years": [
+        2025,
+        2024,
+        2023,
+        2022,
+        2020,
+        2019,
+        2018,
+        2017,
+        2016,
+        2015
+      ],
+      "markCategories": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "totalPapers": 10,
+      "totalQuestions": 298
+    },
+    {
+      "name": "Mathematics",
+      "years": [
+        2025,
+        2024,
+        2023,
+        2022,
+        2020,
+        2019,
+        2018,
+        2017,
+        2015,
+        2014
+      ],
+      "markCategories": [
+        1,
+        4,
+        6
+      ],
+      "totalPapers": 10,
+      "totalQuestions": 303
+    },
+    {
+      "name": "Biology",
+      "years": [
+        2025,
+        2023,
+        2022,
+        2020,
+        2019,
+        2018,
+        2017,
+        2015,
+        2014
+      ],
+      "markCategories": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "totalPapers": 9,
+      "totalQuestions": 266
+    },
+    {
+      "name": "Computer Science",
+      "years": [
+        2025,
+        2024,
+        2022,
+        2020,
+        2019,
+        2018,
+        2017,
+        2016,
+        2015,
+        2014,
+        2013
+      ],
+      "markCategories": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "totalPapers": 11,
+      "totalQuestions": 514
+    }
+  ],
+  "totalPapers": 47,
+  "totalQuestions": 1579
+}

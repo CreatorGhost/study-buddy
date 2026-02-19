@@ -18,13 +18,31 @@ export default function FlashcardsPage() {
   const [decks, setDecks] = useState<FlashcardDeck[]>([]);
   const [activeDeck, setActiveDeck] = useState<FlashcardDeck | null>(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setDecks(getFlashcardDecks());
   }, []);
 
+  // Keyboard shortcuts for flashcard navigation
+  useEffect(() => {
+    if (phase !== 'review' || !activeDeck) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setCurrentCardIndex(prev => Math.max(0, prev - 1));
+      } else if (e.key === 'ArrowRight') {
+        setCurrentCardIndex(prev => Math.min(activeDeck.cards.length - 1, prev + 1));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [phase, activeDeck]);
+
   const handleGenerate = async () => {
     if (!topic.trim()) return;
+    setError(null);
     setPhase('loading');
 
     try {
@@ -57,7 +75,7 @@ export default function FlashcardsPage() {
       setPhase('review');
     } catch {
       setPhase('generate');
-      alert('Failed to generate flashcards. Please try again.');
+      setError('Failed to generate flashcards. Please try again.');
     }
   };
 
@@ -84,10 +102,20 @@ export default function FlashcardsPage() {
 
     if (currentCardIndex < updatedCards.length - 1) {
       setTimeout(() => setCurrentCardIndex(prev => prev + 1), 250);
+    } else {
+      // Last card marked — check if all mastered
+      const toReview = updatedCards.filter(c => c.status === 'review').length;
+      if (toReview === 0) {
+        setTimeout(() => {
+          setPhase('home');
+          setActiveDeck(null);
+        }, 500);
+      }
     }
   };
 
   const handleDeleteDeck = (deckId: string) => {
+    if (!window.confirm('Delete this deck? This cannot be undone.')) return;
     deleteFlashcardDeck(deckId);
     setDecks(getFlashcardDecks());
     if (activeDeck?.id === deckId) {
@@ -118,7 +146,7 @@ export default function FlashcardsPage() {
     <>
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
+        <header className="flex items-center justify-between pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <h1 className="text-[13px] font-semibold text-text-primary">Flashcards</h1>
           {phase !== 'home' && phase !== 'loading' && (
             <button
@@ -172,7 +200,7 @@ export default function FlashcardsPage() {
                         <p className="text-[13px] font-medium text-text-primary">{deck.topic}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[11px] text-text-muted">{deck.subject}</span>
-                          <span className="text-[11px] text-text-faint">{deck.cards.length} cards</span>
+                          <span className="text-[11px] text-text-muted">{deck.cards.length} cards</span>
                           <span className="text-[11px] text-success">
                             {deck.cards.filter(c => c.status === 'got-it').length} mastered
                           </span>
@@ -183,7 +211,7 @@ export default function FlashcardsPage() {
                           e.stopPropagation();
                           handleDeleteDeck(deck.id);
                         }}
-                        className="p-1.5 rounded opacity-0 group-hover:opacity-100 text-text-faint hover:text-error transition-all"
+                        className="p-1.5 rounded opacity-100 md:opacity-0 md:group-hover:opacity-100 text-text-faint hover:text-error transition-all"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -211,8 +239,10 @@ export default function FlashcardsPage() {
                 <label className="text-[12px] font-medium text-text-secondary mb-2 block">Topic</label>
                 <input
                   type="text"
+                  autoFocus
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && topic.trim()) handleGenerate(); }}
                   placeholder="e.g., Cell Biology, Thermodynamics..."
                   className="input-base"
                 />
@@ -238,6 +268,9 @@ export default function FlashcardsPage() {
               >
                 Generate Cards
               </button>
+              {error && (
+                <p className="text-[12px] text-error text-center mt-2">{error}</p>
+              )}
             </div>
           )}
 
@@ -260,7 +293,21 @@ export default function FlashcardsPage() {
                 <span className="text-[11px] text-error">{reviewCount} to review</span>
               </div>
 
-              <Flashcard card={currentCard} onMark={handleMark} />
+              {/* Deck complete banner */}
+              {gotItCount === activeDeck.cards.length && (
+                <div className="bg-success/10 border border-success/20 rounded-lg p-4 mb-4 text-center animate-fade-in">
+                  <p className="text-[13px] font-medium text-success mb-1">Deck Complete!</p>
+                  <p className="text-[12px] text-text-muted">All {activeDeck.cards.length} cards mastered</p>
+                </div>
+              )}
+              {currentCardIndex === activeDeck.cards.length - 1 && reviewCount > 0 && gotItCount < activeDeck.cards.length && (
+                <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 mb-4 text-center animate-fade-in">
+                  <p className="text-[13px] font-medium text-warning mb-1">End of deck</p>
+                  <p className="text-[12px] text-text-muted">{reviewCount} card{reviewCount !== 1 ? 's' : ''} still need review — navigate back to revisit</p>
+                </div>
+              )}
+
+              <Flashcard key={currentCard.id} card={currentCard} onMark={handleMark} />
 
               <div className="flex items-center justify-between mt-6">
                 <button

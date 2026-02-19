@@ -1,0 +1,104 @@
+{
+  "subject": "Chemistry",
+  "years": [
+    2025,
+    2024,
+    2023,
+    2022,
+    2020,
+    2019,
+    2018,
+    2017,
+    2016,
+    2015
+  ],
+  "markCategories": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "papers": [
+    {
+      "id": "chemistry_2025",
+      "year": 2025,
+      "setCode": "56/1/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 53
+    },
+    {
+      "id": "chemistry_2024",
+      "year": 2024,
+      "setCode": "56/1/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 32
+    },
+    {
+      "id": "chemistry_2023",
+      "year": 2023,
+      "setCode": "56/1/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 33
+    },
+    {
+      "id": "chemistry_2022",
+      "year": 2022,
+      "setCode": "56/2/1",
+      "totalMarks": 35,
+      "duration": 180,
+      "questionCount": 13
+    },
+    {
+      "id": "chemistry_2020",
+      "year": 2020,
+      "setCode": "56/1/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 36
+    },
+    {
+      "id": "chemistry_2019",
+      "year": 2019,
+      "setCode": null,
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 27
+    },
+    {
+      "id": "chemistry_2018",
+      "year": 2018,
+      "setCode": "56/2",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "chemistry_2017",
+      "year": 2017,
+      "setCode": "56/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "chemistry_2016",
+      "year": 2016,
+      "setCode": "56/1/C",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "chemistry_2015",
+      "year": 2015,
+      "setCode": "A",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 26
+    }
+  ],
+  "totalQuestions": 298
+}

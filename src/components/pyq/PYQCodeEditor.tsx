@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { EditorView } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Compartment } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
@@ -13,6 +13,7 @@ interface PYQCodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   language: 'python' | 'cpp' | 'sql';
+  onLanguageChange?: (language: 'python' | 'cpp' | 'sql') => void;
   disabled?: boolean;
 }
 
@@ -70,65 +71,69 @@ export default function PYQCodeEditor({
   value,
   onChange,
   language,
+  onLanguageChange,
   disabled = false,
 }: PYQCodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const readOnlyCompartment = useRef(new Compartment());
 
-  // Keep onChange ref up to date
   onChangeRef.current = onChange;
 
-  const createEditor = useCallback((lang: 'python' | 'cpp' | 'sql', initialDoc: string) => {
+  const createEditor = useCallback((lang: 'python' | 'cpp' | 'sql', initialDoc: string, readOnly: boolean) => {
     if (!editorRef.current) return;
 
-    // Destroy existing editor
     if (viewRef.current) {
       viewRef.current.destroy();
       viewRef.current = null;
     }
 
-    const extensions = [
-      basicSetup,
-      getLanguageExtension(lang),
-      oneDark,
-      customTheme,
-      EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          onChangeRef.current(update.state.doc.toString());
-        }
-      }),
-    ];
-
-    if (disabled) {
-      extensions.push(EditorState.readOnly.of(true));
-    }
-
     const state = EditorState.create({
       doc: initialDoc,
-      extensions,
+      extensions: [
+        basicSetup,
+        getLanguageExtension(lang),
+        oneDark,
+        customTheme,
+        readOnlyCompartment.current.of(EditorState.readOnly.of(readOnly)),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            onChangeRef.current(update.state.doc.toString());
+          }
+        }),
+      ],
     });
 
     viewRef.current = new EditorView({
       state,
       parent: editorRef.current,
     });
-  }, [disabled]);
+  }, []);
 
-  // Keep value ref for initial editor creation
   const valueRef = useRef(value);
   valueRef.current = value;
 
-  // Initialize and rebuild on language change
+  // Rebuild editor only on language change
   useEffect(() => {
-    createEditor(language, valueRef.current);
+    createEditor(language, valueRef.current, disabled);
     return () => {
       if (viewRef.current) {
         viewRef.current.destroy();
         viewRef.current = null;
       }
     };
-  }, [language, createEditor]);
+  }, [language, createEditor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Toggle read-only via compartment reconfiguration (no editor destruction)
+  useEffect(() => {
+    if (!viewRef.current) return;
+    viewRef.current.dispatch({
+      effects: readOnlyCompartment.current.reconfigure(
+        EditorState.readOnly.of(disabled),
+      ),
+    });
+  }, [disabled]);
 
   // Sync external value changes
   useEffect(() => {
@@ -154,9 +159,8 @@ export default function PYQCodeEditor({
           <button
             key={lang}
             onClick={() => {
-              if (lang !== language) {
-                onChange(value);
-                // Language change is handled via props by the parent
+              if (lang !== language && onLanguageChange) {
+                onLanguageChange(lang);
               }
             }}
             className={`px-3 py-1.5 text-[11px] font-medium transition-colors duration-100

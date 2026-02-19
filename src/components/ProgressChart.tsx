@@ -14,13 +14,17 @@ export function ProgressBar({ label, value, max = 100, subtitle }: ProgressBarPr
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-[13px] font-medium text-text-primary">{label}</span>
-        <span className="text-[12px] text-text-muted">{Math.round(percentage)}%</span>
+        <div className="flex items-baseline gap-2 min-w-0">
+          <span className="text-[13px] font-medium text-text-primary truncate">{label}</span>
+          {subtitle && <span className="text-[11px] text-text-muted shrink-0">{subtitle}</span>}
+        </div>
+        <span className="text-[12px] text-text-muted shrink-0 ml-2">{Math.round(percentage)}%</span>
       </div>
-      {subtitle && <span className="text-[11px] text-text-faint">{subtitle}</span>}
       <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full bg-accent transition-all duration-500"
+          className={`h-full rounded-full transition-[width] duration-500 ease-out ${
+            percentage >= 70 ? 'bg-success' : percentage >= 50 ? 'bg-warning' : 'bg-error'
+          }`}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -46,8 +50,8 @@ export function StatCard({ label, value, icon, trend }: StatCardProps) {
           <span className="text-[11px] text-success font-medium">{trend}</span>
         )}
       </div>
-      <p className="text-xl font-semibold text-text-primary">{value}</p>
-      <p className="text-[11px] text-text-muted mt-0.5">{label}</p>
+      <p className="text-lg font-semibold text-text-primary">{value}</p>
+      <p className="text-[11px] text-text-secondary mt-0.5">{label}</p>
     </div>
   );
 }

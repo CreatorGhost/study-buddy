@@ -22,9 +22,11 @@ export default function QuizPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResult, setShowResult] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateQuiz = async () => {
     if (!topic.trim()) return;
+    setError(null);
     setPhase('loading');
 
     try {
@@ -44,7 +46,7 @@ export default function QuizPage() {
       setPhase('taking');
     } catch {
       setPhase('setup');
-      alert('Failed to generate quiz. Please try again.');
+      setError('Failed to generate quiz. Please try again.');
     }
   };
 
@@ -89,7 +91,7 @@ export default function QuizPage() {
     <>
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="flex items-center px-4 h-12 border-b border-border shrink-0">
+        <header className="flex items-center pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <h1 className="text-[13px] font-semibold text-text-primary">Quiz</h1>
         </header>
 
@@ -111,8 +113,10 @@ export default function QuizPage() {
                 <label className="text-[12px] font-medium text-text-secondary mb-2 block">Topic</label>
                 <input
                   type="text"
+                  autoFocus
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && topic.trim()) generateQuiz(); }}
                   placeholder="e.g., Electromagnetic Induction, Organic Chemistry..."
                   className="input-base"
                 />
@@ -189,6 +193,9 @@ export default function QuizPage() {
                 <Play size={14} />
                 Start Quiz
               </button>
+              {error && (
+                <p className="text-[12px] text-error text-center mt-2">{error}</p>
+              )}
             </div>
           )}
 
@@ -220,6 +227,7 @@ export default function QuizPage() {
               </div>
 
               <QuizCard
+                key={questions[currentIndex].id}
                 question={questions[currentIndex]}
                 index={currentIndex}
                 total={questions.length}
@@ -239,7 +247,7 @@ export default function QuizPage() {
                   Prev
                 </button>
 
-                <div className="flex gap-1">
+                <div className="flex flex-wrap justify-center gap-1">
                   {questions.map((q, i) => (
                     <button
                       key={q.id}
@@ -267,13 +275,20 @@ export default function QuizPage() {
                     <ChevronRight size={14} />
                   </button>
                 ) : (
-                  <button
-                    onClick={submitQuiz}
-                    disabled={Object.keys(answers).length < questions.length}
-                    className="btn-primary"
-                  >
-                    Submit
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={submitQuiz}
+                      disabled={Object.keys(answers).length < questions.length}
+                      className="btn-primary"
+                    >
+                      Submit
+                    </button>
+                    {Object.keys(answers).length < questions.length && (
+                      <span className="absolute -top-6 right-0 text-[10px] text-text-muted whitespace-nowrap">
+                        {questions.length - Object.keys(answers).length} unanswered
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

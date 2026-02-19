@@ -22,6 +22,9 @@ interface DashboardData {
   recentPYQ: { id: string; subject: string; totalScore: number; maxScore: number; questionCount: number; createdAt: number }[];
 }
 
+const formatDate = (timestamp: number) =>
+  new Date(timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardData | null>(null);
 
@@ -29,24 +32,56 @@ export default function DashboardPage() {
     setStats(getDashboardStats() as DashboardData);
   }, []);
 
-  if (!stats) return null;
+  // Skeleton loading state
+  if (!stats) return (
+    <>
+      <Sidebar />
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="flex items-center pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
+          <h1 className="text-[13px] font-semibold text-text-primary">Dashboard</h1>
+        </header>
+        <div className="flex-1 overflow-y-auto px-4 pt-6 pb-12">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-4 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-bg-surface border border-border rounded-lg p-4 animate-pulse">
+                  <div className="w-7 h-7 rounded-md bg-bg-elevated mb-2" />
+                  <div className="h-5 w-12 bg-bg-elevated rounded mb-1" />
+                  <div className="h-3 w-20 bg-bg-elevated rounded" />
+                </div>
+              ))}
+            </div>
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="bg-bg-surface border border-border rounded-lg p-5 animate-pulse">
+                <div className="h-3 w-32 bg-bg-elevated rounded mb-4" />
+                <div className="space-y-3">
+                  <div className="h-2 w-full bg-bg-elevated rounded" />
+                  <div className="h-2 w-3/4 bg-bg-elevated rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </>
+  );
 
   const isEmpty = stats.totalQuizzes === 0 && stats.totalTopics === 0 && stats.totalPYQSessions === 0;
 
   return (
     <>
       <Sidebar />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="flex items-center px-4 h-12 border-b border-border shrink-0">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden" aria-label="Dashboard">
+        <header className="flex items-center pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <h1 className="text-[13px] font-semibold text-text-primary">Dashboard</h1>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="flex-1 overflow-y-auto px-4 pt-6 pb-12">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full animate-fade-in-up">
-              <Trophy size={24} className="text-text-faint mb-3" strokeWidth={1.5} />
+              <Trophy size={32} className="text-text-muted mb-4" strokeWidth={1.5} />
               <h2 className="text-[15px] font-medium text-text-primary mb-1">No data yet</h2>
-              <p className="text-[12px] text-text-muted mb-5 text-center max-w-xs">
+              <p className="text-[13px] text-text-secondary mb-5 text-center max-w-xs">
                 Take a quiz or practice PYQs to start tracking progress
               </p>
               <div className="flex gap-2">
@@ -61,7 +96,7 @@ export default function DashboardPage() {
           ) : (
             <div className="max-w-3xl mx-auto space-y-6 animate-fade-in-up">
               {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-4 gap-3">
                 <StatCard
                   label="Quizzes Taken"
                   value={stats.totalQuizzes}
@@ -94,20 +129,20 @@ export default function DashboardPage() {
                     </div>
                     <Link
                       href="/pyq"
-                      className="flex items-center gap-1 text-[11px] text-accent-light hover:underline"
+                      className="flex items-center gap-1 text-[11px] text-accent-light hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded-sm"
                     >
                       Practice More <ArrowRight size={10} />
                     </Link>
                   </div>
 
                   {/* PYQ summary row */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-2 gap-3 mb-4 max-w-md">
                     <div className="bg-bg-elevated rounded-md px-3 py-2.5">
-                      <p className="text-[11px] text-text-faint mb-0.5">Sessions</p>
+                      <p className="text-[11px] text-text-muted mb-0.5">Sessions</p>
                       <p className="text-[15px] font-semibold text-text-primary">{stats.totalPYQSessions}</p>
                     </div>
                     <div className="bg-bg-elevated rounded-md px-3 py-2.5">
-                      <p className="text-[11px] text-text-faint mb-0.5">Avg Score</p>
+                      <p className="text-[11px] text-text-muted mb-0.5">Avg Score</p>
                       <p className={`text-[15px] font-semibold ${
                         stats.pyqAverageScore >= 70 ? 'text-success'
                           : stats.pyqAverageScore >= 50 ? 'text-warning'
@@ -139,25 +174,27 @@ export default function DashboardPage() {
                     <Target size={13} className="text-warning" />
                     <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">PYQ Weak Topics</h3>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-h-[280px] overflow-y-auto">
                     {stats.pyqWeakTopics.map((topic, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
+                        className="flex items-center justify-between py-2.5 px-2 rounded-md hover:bg-bg-elevated transition-colors duration-100"
                       >
-                        <div>
-                          <p className="text-[13px] font-medium text-text-primary">{topic.topic}</p>
-                          <p className="text-[11px] text-text-faint">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium text-text-primary truncate">{topic.topic}</p>
+                          <p className="text-[11px] text-text-muted truncate">
                             {topic.subject} · {topic.totalAttempted} attempt{topic.totalAttempted !== 1 ? 's' : ''}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[12px] font-medium text-error">
+                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                          <span className={`text-[12px] font-medium ${
+                            topic.accuracy >= 0.5 ? 'text-warning' : 'text-error'
+                          }`}>
                             {Math.round(topic.accuracy * 100)}%
                           </span>
                           <Link
-                            href="/pyq"
-                            className="flex items-center gap-1 text-[11px] text-accent-light hover:underline"
+                            href={`/pyq?subject=${encodeURIComponent(topic.subject)}`}
+                            className="flex items-center gap-1 text-[11px] text-accent-light hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded-sm"
                           >
                             Practice <ArrowRight size={10} />
                           </Link>
@@ -172,7 +209,7 @@ export default function DashboardPage() {
               {stats.subjectStats.length > 0 && (
                 <div className="bg-bg-surface border border-border rounded-lg p-5">
                   <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider mb-4">Subject Progress</h3>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {stats.subjectStats.map(s => (
                       <ProgressBar
                         key={s.subject}
@@ -192,23 +229,25 @@ export default function DashboardPage() {
                     <AlertTriangle size={13} className="text-warning" />
                     <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">Weak Areas</h3>
                   </div>
-                  <div className="space-y-1">
-                    {stats.weakAreas.map((area, i) => (
+                  <div className="space-y-1 max-h-[280px] overflow-y-auto">
+                    {stats.weakAreas.slice(0, 8).map((area, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
+                        className="flex items-center justify-between py-2.5 px-2 rounded-md hover:bg-bg-elevated transition-colors duration-100"
                       >
-                        <div>
-                          <p className="text-[13px] font-medium text-text-primary">{area.topic}</p>
-                          <p className="text-[11px] text-text-faint">{area.subject}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium text-text-primary truncate">{area.topic}</p>
+                          <p className="text-[11px] text-text-muted truncate">{area.subject}</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[12px] font-medium text-error">
+                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                          <span className={`text-[12px] font-medium ${
+                            area.avgScore >= 50 ? 'text-warning' : 'text-error'
+                          }`}>
                             {Math.round(area.avgScore)}%
                           </span>
                           <Link
-                            href="/quiz"
-                            className="flex items-center gap-1 text-[11px] text-accent-light hover:underline"
+                            href={`/quiz?subject=${encodeURIComponent(area.subject)}&topic=${encodeURIComponent(area.topic)}`}
+                            className="flex items-center gap-1 text-[11px] text-accent-light hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded-sm"
                           >
                             Practice <ArrowRight size={10} />
                           </Link>
@@ -229,16 +268,16 @@ export default function DashboardPage() {
                       return (
                         <div
                           key={session.id}
-                          className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
+                          className="flex items-center justify-between py-2.5 px-2 rounded-md hover:bg-bg-elevated transition-colors duration-100"
                         >
-                          <div>
-                            <p className="text-[13px] font-medium text-text-primary">{session.subject}</p>
-                            <p className="text-[11px] text-text-faint">
-                              {session.questionCount} questions · {new Date(session.createdAt).toLocaleDateString()}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-medium text-text-primary truncate">{session.subject}</p>
+                            <p className="text-[11px] text-text-muted truncate">
+                              {session.questionCount} questions · {formatDate(session.createdAt)}
                             </p>
                           </div>
                           <span
-                            className={`text-[12px] font-medium ${
+                            className={`text-[12px] font-medium shrink-0 ml-3 ${
                               pct >= 0.7
                                 ? 'text-success'
                                 : pct >= 0.5
@@ -263,19 +302,19 @@ export default function DashboardPage() {
                     {stats.recentQuizzes.map(quiz => (
                       <div
                         key={quiz.id}
-                        className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
+                        className="flex items-center justify-between py-2.5 px-2 rounded-md hover:bg-bg-elevated transition-colors duration-100"
                       >
-                        <div>
-                          <p className="text-[13px] font-medium text-text-primary">{quiz.topic}</p>
-                          <p className="text-[11px] text-text-faint">
-                            {quiz.subject} · {new Date(quiz.date).toLocaleDateString()}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium text-text-primary truncate">{quiz.topic}</p>
+                          <p className="text-[11px] text-text-muted truncate">
+                            {quiz.subject} · {formatDate(quiz.date)}
                           </p>
                         </div>
                         <span
-                          className={`text-[12px] font-medium ${
-                            quiz.score / quiz.total >= 0.7
+                          className={`text-[12px] font-medium shrink-0 ml-3 ${
+                            quiz.total > 0 && quiz.score / quiz.total >= 0.7
                               ? 'text-success'
-                              : quiz.score / quiz.total >= 0.5
+                              : quiz.total > 0 && quiz.score / quiz.total >= 0.5
                               ? 'text-warning'
                               : 'text-error'
                           }`}

@@ -17,20 +17,22 @@ export default function PYQImageUpload({
 }: PYQImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsCompressing(true);
+    setUploadError(null);
     try {
       const base64 = await compressImage(file);
       onImageChange(base64);
-    } catch {
-      console.error('Failed to compress image');
+    } catch (err) {
+      console.error('Failed to compress image:', err);
+      setUploadError('Failed to process image. Please try a different file.');
     } finally {
       setIsCompressing(false);
-      // Reset input so re-selecting the same file works
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -39,6 +41,7 @@ export default function PYQImageUpload({
 
   const handleRemove = () => {
     onImageChange(undefined);
+    setUploadError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -50,7 +53,6 @@ export default function PYQImageUpload({
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled || isCompressing}
@@ -82,6 +84,10 @@ export default function PYQImageUpload({
           <Loader2 size={16} className="text-accent animate-spin" />
           <span className="text-[12px] text-text-secondary">Compressing image...</span>
         </div>
+      )}
+
+      {uploadError && (
+        <p className="text-[11px] text-error">{uploadError}</p>
       )}
 
       {imageBase64 && !isCompressing && (

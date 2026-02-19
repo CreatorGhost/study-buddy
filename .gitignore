@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+# Python virtual environments
+.venv*/
+
 # testing
 /coverage
 
@@ -23,6 +26,7 @@
 # misc
 .DS_Store
 *.pem
+tmp-*.md
 
 # debug
 npm-debug.log*
@@ -39,3 +43,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI tooling local settings
+.claude/
+.playwright-mcp/
+
+# Downloaded/generated PDFs (regenerable via scripts)
+cbse_papers/downloads/
+data/pdfs/
+data/parsed/test_*.md

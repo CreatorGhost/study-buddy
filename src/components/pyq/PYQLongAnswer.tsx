@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Type, Camera } from 'lucide-react';
 import PYQTextAnswer from './PYQTextAnswer';
 import PYQImageUpload from './PYQImageUpload';
@@ -23,6 +23,11 @@ export default function PYQLongAnswer({
   disabled = false,
 }: PYQLongAnswerProps) {
   const [mode, setMode] = useState<AnswerMode>(imageBase64 ? 'photo' : 'type');
+
+  useEffect(() => {
+    if (imageBase64 && mode !== 'photo') setMode('photo');
+    else if (!imageBase64 && mode === 'photo') setMode('type');
+  }, [imageBase64]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-2.5">

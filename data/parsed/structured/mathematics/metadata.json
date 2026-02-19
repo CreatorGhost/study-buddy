@@ -1,0 +1,103 @@
+{
+  "subject": "Mathematics",
+  "years": [
+    2025,
+    2024,
+    2023,
+    2022,
+    2020,
+    2019,
+    2018,
+    2017,
+    2015,
+    2014
+  ],
+  "markCategories": [
+    1,
+    4,
+    6
+  ],
+  "papers": [
+    {
+      "id": "mathematics_2025",
+      "year": 2025,
+      "setCode": "65/1/1",
+      "totalMarks": 80,
+      "duration": 180,
+      "questionCount": 41
+    },
+    {
+      "id": "mathematics_2024",
+      "year": 2024,
+      "setCode": "65/3/1",
+      "totalMarks": 80,
+      "duration": 180,
+      "questionCount": 35
+    },
+    {
+      "id": "mathematics_2023",
+      "year": 2023,
+      "setCode": "65/3/1",
+      "totalMarks": 80,
+      "duration": 180,
+      "questionCount": 37
+    },
+    {
+      "id": "mathematics_2022",
+      "year": 2022,
+      "setCode": "65/1/1",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 14
+    },
+    {
+      "id": "mathematics_2020",
+      "year": 2020,
+      "setCode": "65/2/2",
+      "totalMarks": 80,
+      "duration": 180,
+      "questionCount": 36
+    },
+    {
+      "id": "mathematics_2019",
+      "year": 2019,
+      "setCode": null,
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 27
+    },
+    {
+      "id": "mathematics_2018",
+      "year": 2018,
+      "setCode": "65/2",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 29
+    },
+    {
+      "id": "mathematics_2017",
+      "year": 2017,
+      "setCode": "65/1",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 29
+    },
+    {
+      "id": "mathematics_2015",
+      "year": 2015,
+      "setCode": "65/1/1/D",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "mathematics_2014",
+      "year": 2014,
+      "setCode": "65/1",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 29
+    }
+  ],
+  "totalQuestions": 303
+}

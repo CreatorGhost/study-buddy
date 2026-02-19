@@ -36,6 +36,7 @@ export default function ChatInput({
     setInput('');
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = '20px';
     }
   };
 
@@ -62,14 +63,22 @@ export default function ChatInput({
         />
       </div>
       <div className="flex items-center justify-between px-3 pb-2">
-        <SubjectSelector value={subject} onChange={onSubjectChange} />
+        <div className="flex items-center gap-3">
+          <SubjectSelector value={subject} onChange={onSubjectChange} />
+          <span className="text-[10px] text-text-muted hidden sm:inline">Shift+Enter for new line</span>
+        </div>
         <button
           onClick={handleSubmit}
           disabled={!input.trim() || disabled}
+          aria-label="Send message"
           className="w-7 h-7 rounded-md bg-accent text-white flex items-center justify-center
                      disabled:opacity-30 hover:bg-accent-light transition-colors duration-100 shrink-0"
         >
-          <ArrowUp size={14} strokeWidth={2} />
+          {disabled ? (
+            <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <ArrowUp size={14} strokeWidth={2} />
+          )}
         </button>
       </div>
     </div>
