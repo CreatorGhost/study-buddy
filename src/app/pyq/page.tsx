@@ -28,6 +28,8 @@ import {
   identifyWeakTopics,
   calculateTotalScore,
   detectLanguage,
+  assemblePaper,
+  CBSE_PAPER_STRUCTURE,
 } from '@/lib/pyq-utils';
 import { savePYQSession } from '@/lib/storage';
 import { ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
@@ -60,43 +62,77 @@ export default function PYQPage() {
 
     try {
       if (sessionConfig.mode === 'full-paper') {
-        // Full paper mode — fetch all questions for a specific year, preserve order
-        const params = new URLSearchParams({
-          subject: sessionConfig.subject,
-          year: String(sessionConfig.paperYear),
-          limit: '150',
-        });
+        let paperQuestions: PYQQuestion[];
+        let durationMinutes = 180;
 
-        const res = await fetch(`/api/pyq?${params}`);
-        if (!res.ok) throw new Error('Failed to fetch questions');
-        const data = await res.json();
+        if (sessionConfig.aiGenerated) {
+          // AI path — generate 50% reworded + 50% fresh
+          if (!confirm('This will use AI to generate a full sample paper. This costs API credits. Continue?')) {
+            setSetupLoading(false);
+            return;
+          }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mapped = (data.questions || []).map((q: any) => ({
-          id: q.id,
-          questionNumber: q.question_number,
-          section: q.section || '',
-          type: q.type || 'short-answer',
-          question: q.question,
-          options: q.options,
-          correctAnswer: q.correct_answer || '',
-          solution: q.solution || '',
-          marks: q.marks,
-          topic: q.topic,
-        })) as PYQQuestion[];
+          const res = await fetch('/api/pyq/generate-paper', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject: sessionConfig.subject }),
+          });
 
-        // Filter out diagram-dependent questions (can't be answered without the image)
-        const usable = mapped.filter((q) => !requiresDiagram(q.question));
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Generation failed' }));
+            throw new Error(err.error || 'Failed to generate paper');
+          }
 
-        if (usable.length === 0) {
-          setSetupError('No questions found for this paper. Try a different year.');
+          const data = await res.json();
+          paperQuestions = (data.questions || []) as PYQQuestion[];
+          durationMinutes = data.structure?.durationMinutes || 180;
+        } else {
+          // PYQ path — assemble from existing question bank
+          const params = new URLSearchParams({
+            subject: sessionConfig.subject,
+            limit: '600',
+          });
+
+          const res = await fetch(`/api/pyq?${params}`);
+          if (!res.ok) throw new Error('Failed to fetch questions');
+          const data = await res.json();
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mapped = (data.questions || []).map((q: any) => ({
+            id: q.id,
+            questionNumber: q.question_number,
+            section: q.section || '',
+            type: q.type || 'short-answer',
+            question: q.question,
+            options: q.options,
+            correctAnswer: q.correct_answer || '',
+            solution: q.solution || '',
+            marks: q.marks,
+            topic: q.topic,
+          })) as PYQQuestion[];
+
+          const { questions: assembled, structure, warnings } = assemblePaper(mapped, sessionConfig.subject);
+          if (warnings.length > 0) {
+            console.warn('Paper assembly warnings:', warnings);
+          }
+          paperQuestions = assembled;
+          durationMinutes = structure.durationMinutes;
+        }
+
+        if (paperQuestions.length === 0) {
+          setSetupError('Not enough questions to build a paper. Try a different subject.');
           setSetupLoading(false);
           return;
         }
 
-        // Initialize answers — no shuffle, preserve original order
+        setConfig({
+          ...sessionConfig,
+          timerEnabled: true,
+          durationMinutes,
+        });
+
         const initialAnswers: Record<string, PYQAnswer> = {};
-        for (const q of usable) {
+        for (const q of paperQuestions) {
           initialAnswers[q.id] = {
             questionId: q.id,
             type: q.type,
@@ -105,7 +141,7 @@ export default function PYQPage() {
           };
         }
 
-        setQuestions(usable);
+        setQuestions(paperQuestions);
         setAnswers(initialAnswers);
         setAutoResults({});
         setAiFeedback({});
@@ -521,11 +557,11 @@ export default function PYQPage() {
         <header className="flex items-center justify-between pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <h1 className="text-[13px] font-semibold text-text-primary">
             {config?.mode === 'full-paper' && phase !== 'setup'
-              ? `${config.subject} — ${config.paperYear} Full Paper`
+              ? `Sample Paper — ${config.subject} — ${CBSE_PAPER_STRUCTURE[config.subject]?.totalMarks ?? 70} Marks`
               : 'PYQ Practice'}
           </h1>
           <div className="flex items-center gap-3">
-            {phase === 'taking' && config?.mode === 'full-paper' && config.timerEnabled && config.durationMinutes && (
+            {phase === 'taking' && config?.mode === 'full-paper' && config.durationMinutes && (
               <PYQFullPaperTimer
                 durationMinutes={config.durationMinutes}
                 onTimeUp={handleSubmit}
@@ -570,6 +606,7 @@ export default function PYQPage() {
                 answers={answers}
                 onAnswer={handleAnswer}
                 onSubmit={handleSubmit}
+                subject={config?.subject}
               />
             </div>
           )}
@@ -699,6 +736,7 @@ export default function PYQPage() {
                     answers={answers}
                     onAnswer={() => {}}
                     onSubmit={() => {}}
+                    subject={config?.subject}
                     showResults
                     autoResults={autoResults}
                     aiFeedback={aiFeedback}

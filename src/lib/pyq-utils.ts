@@ -10,6 +10,165 @@ export interface SectionGroup {
 const SECTION_ORDER = ['A', 'B', 'C', 'D', 'E'];
 
 /**
+ * Real CBSE board exam paper structure per subject.
+ * Each section specifies: question count, marks per question.
+ * Math has Section D=5marks and Section E=4marks (reversed from other subjects).
+ */
+export interface CBSESectionDef {
+  section: string;
+  count: number;
+  marksPerQuestion: number;
+}
+
+export interface CBSEPaperDef {
+  sections: CBSESectionDef[];
+  totalQuestions: number;
+  totalMarks: number;
+  durationMinutes: number;
+}
+
+export const CBSE_PAPER_STRUCTURE: Record<string, CBSEPaperDef> = {
+  Physics: {
+    sections: [
+      { section: 'A', count: 16, marksPerQuestion: 1 },
+      { section: 'B', count: 5, marksPerQuestion: 2 },
+      { section: 'C', count: 7, marksPerQuestion: 3 },
+      { section: 'D', count: 2, marksPerQuestion: 4 },
+      { section: 'E', count: 3, marksPerQuestion: 5 },
+    ],
+    totalQuestions: 33,
+    totalMarks: 70,
+    durationMinutes: 180,
+  },
+  Chemistry: {
+    sections: [
+      { section: 'A', count: 16, marksPerQuestion: 1 },
+      { section: 'B', count: 5, marksPerQuestion: 2 },
+      { section: 'C', count: 7, marksPerQuestion: 3 },
+      { section: 'D', count: 2, marksPerQuestion: 4 },
+      { section: 'E', count: 3, marksPerQuestion: 5 },
+    ],
+    totalQuestions: 33,
+    totalMarks: 70,
+    durationMinutes: 180,
+  },
+  Biology: {
+    sections: [
+      { section: 'A', count: 16, marksPerQuestion: 1 },
+      { section: 'B', count: 5, marksPerQuestion: 2 },
+      { section: 'C', count: 7, marksPerQuestion: 3 },
+      { section: 'D', count: 2, marksPerQuestion: 4 },
+      { section: 'E', count: 3, marksPerQuestion: 5 },
+    ],
+    totalQuestions: 33,
+    totalMarks: 70,
+    durationMinutes: 180,
+  },
+  Mathematics: {
+    sections: [
+      { section: 'A', count: 20, marksPerQuestion: 1 },
+      { section: 'B', count: 5, marksPerQuestion: 2 },
+      { section: 'C', count: 6, marksPerQuestion: 3 },
+      { section: 'D', count: 4, marksPerQuestion: 5 },
+      { section: 'E', count: 3, marksPerQuestion: 4 },
+    ],
+    totalQuestions: 38,
+    totalMarks: 80,
+    durationMinutes: 180,
+  },
+  'Computer Science': {
+    sections: [
+      { section: 'A', count: 18, marksPerQuestion: 1 },
+      { section: 'B', count: 7, marksPerQuestion: 2 },
+      { section: 'C', count: 5, marksPerQuestion: 3 },
+      { section: 'D', count: 2, marksPerQuestion: 4 },
+      { section: 'E', count: 3, marksPerQuestion: 5 },
+    ],
+    totalQuestions: 35,
+    totalMarks: 70,
+    durationMinutes: 180,
+  },
+};
+
+export interface AssembledPaper {
+  questions: PYQQuestion[];
+  structure: CBSEPaperDef;
+  warnings: string[];
+}
+
+/**
+ * Assemble a sample paper from a pool of questions matching CBSE structure.
+ * Filters by section + marks, removes diagram questions, shuffles, picks N.
+ * Renumbers questions sequentially.
+ */
+export function assemblePaper(allQuestions: PYQQuestion[], subject: string): AssembledPaper {
+  const structure = CBSE_PAPER_STRUCTURE[subject];
+  if (!structure) {
+    return { questions: allQuestions, structure: CBSE_PAPER_STRUCTURE.Physics, warnings: [`Unknown subject "${subject}", using all questions`] };
+  }
+
+  const warnings: string[] = [];
+  const assembled: PYQQuestion[] = [];
+  const usedIds = new Set<string>();
+
+  for (const secDef of structure.sections) {
+    // Filter pool: matching section + marks, not diagram-dependent, not already used
+    const pool = allQuestions.filter(
+      (q) =>
+        (q.section || '').toUpperCase() === secDef.section &&
+        q.marks === secDef.marksPerQuestion &&
+        !requiresDiagram(q.question) &&
+        !usedIds.has(q.id),
+    );
+
+    const picked = shuffle(pool).slice(0, secDef.count);
+
+    if (picked.length < secDef.count) {
+      warnings.push(
+        `Section ${secDef.section}: needed ${secDef.count} questions (${secDef.marksPerQuestion}m), only found ${picked.length}`,
+      );
+    }
+
+    for (const q of picked) {
+      usedIds.add(q.id);
+      assembled.push(q);
+    }
+  }
+
+  // Renumber sequentially
+  const renumbered = assembled.map((q, i) => ({
+    ...q,
+    questionNumber: i + 1,
+  }));
+
+  return { questions: renumbered, structure, warnings };
+}
+
+/**
+ * Generate General Instructions text matching CBSE board paper format.
+ */
+export function generatePaperInstructions(subject: string): string[] {
+  const structure = CBSE_PAPER_STRUCTURE[subject];
+  if (!structure) return [];
+
+  const instructions: string[] = [
+    'All questions are compulsory. However, internal choices have been provided in some questions. A student has to attempt only one of the alternatives in such questions.',
+  ];
+
+  for (const secDef of structure.sections) {
+    const markWord = secDef.marksPerQuestion === 1 ? 'mark' : 'marks';
+    instructions.push(
+      `Section ${secDef.section} consists of ${secDef.count} questions of ${secDef.marksPerQuestion} ${markWord} each.`,
+    );
+  }
+
+  instructions.push('There is no overall choice in the question paper.');
+  instructions.push('Use of calculators and log tables is not permitted.');
+
+  return instructions;
+}
+
+/**
  * Group questions by their section field (A, B, C, D, E).
  * Sorts sections in order and questions within each section by questionNumber.
  */

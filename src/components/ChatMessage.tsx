@@ -18,6 +18,69 @@ const agentBadge: Record<AgentType, { label: string; icon: typeof Bot }> = {
   flashcard: { label: 'Flashcard', icon: Layers },
 };
 
+const MERMAID_BLOCK_RE = /```mermaid\n([\s\S]*?)```/g;
+
+interface ContentSegment {
+  type: 'markdown' | 'mermaid-complete' | 'mermaid-streaming';
+  content: string;
+  key: string;
+}
+
+/**
+ * Split message content into segments: markdown text and mermaid blocks.
+ * Complete blocks are extracted so they can be rendered as stable components
+ * outside ReactMarkdown (prevents remounting during streaming).
+ */
+function splitContent(content: string): ContentSegment[] {
+  const segments: ContentSegment[] = [];
+  let lastIndex = 0;
+  let mermaidIndex = 0;
+
+  const regex = new RegExp(MERMAID_BLOCK_RE.source, 'g');
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    // Text before this mermaid block
+    if (match.index > lastIndex) {
+      const text = content.slice(lastIndex, match.index);
+      if (text.trim()) {
+        segments.push({ type: 'markdown', content: text, key: `md-${lastIndex}` });
+      }
+    }
+
+    segments.push({
+      type: 'mermaid-complete',
+      content: match[1].replace(/\n$/, ''),
+      key: `mermaid-${mermaidIndex}`,
+    });
+    mermaidIndex++;
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text after last mermaid block
+  if (lastIndex < content.length) {
+    const remaining = content.slice(lastIndex);
+
+    // Check for an incomplete/streaming mermaid block at the end
+    const incompleteMatch = remaining.match(/```mermaid\n([\s\S]*)$/);
+    if (incompleteMatch) {
+      const textBefore = remaining.slice(0, incompleteMatch.index);
+      if (textBefore.trim()) {
+        segments.push({ type: 'markdown', content: textBefore, key: `md-${lastIndex}` });
+      }
+      segments.push({
+        type: 'mermaid-streaming',
+        content: incompleteMatch[1],
+        key: `mermaid-streaming-${mermaidIndex}`,
+      });
+    } else if (remaining.trim()) {
+      segments.push({ type: 'markdown', content: remaining, key: `md-${lastIndex}` });
+    }
+  }
+
+  return segments;
+}
+
 interface ChatMessageProps {
   message: Message;
   isStreaming?: boolean;
@@ -34,15 +97,7 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
     setTimeout(() => setCopiedBlock(null), 2000);
   }, []);
 
-  const completeMermaidBlocks = useMemo(() => {
-    const set = new Set<string>();
-    const regex = /```mermaid\n([\s\S]*?)```/g;
-    let match;
-    while ((match = regex.exec(message.content)) !== null) {
-      set.add(match[1].replace(/\n$/, ''));
-    }
-    return set;
-  }, [message.content]);
+  const segments = useMemo(() => splitContent(message.content), [message.content]);
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
@@ -70,61 +125,67 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
-            <div className="prose-study">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-                components={{
-                  code({ className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    const content = String(children).replace(/\n$/, '');
+            <div className="prose-study space-y-2">
+              {segments.map((seg) => {
+                if (seg.type === 'mermaid-complete') {
+                  return <MermaidDiagram key={seg.key} chart={seg.content} />;
+                }
 
-                    if (match?.[1] === 'mermaid') {
-                      if (completeMermaidBlocks.has(content)) {
-                        return <MermaidDiagram chart={content} />;
-                      }
-                      return (
-                        <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2">
-                          <div className="flex items-center gap-1.5 mb-2 text-[11px] text-text-muted">
-                            <GitBranch size={11} />
-                            <span>Generating diagram...</span>
-                          </div>
-                          <code className="text-text-faint text-[11px]">{content}</code>
-                        </pre>
-                      );
-                    }
+                if (seg.type === 'mermaid-streaming') {
+                  return (
+                    <pre key={seg.key} className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2">
+                      <div className="flex items-center gap-1.5 mb-2 text-[11px] text-text-muted">
+                        <GitBranch size={11} />
+                        <span>Generating diagram...</span>
+                      </div>
+                      <code className="text-text-faint text-[11px]">{seg.content}</code>
+                    </pre>
+                  );
+                }
 
-                    if (match) {
-                      return (
-                        <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2 relative group/code">
-                          <button
-                            onClick={() => handleCopy(content)}
-                            className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-bg-elevated border border-border text-text-faint
-                                       hover:text-text-secondary opacity-0 group-hover/code:opacity-100 transition-opacity text-[11px]"
-                            title="Copy code"
-                          >
-                            {copiedBlock === content ? 'Copied!' : 'Copy'}
-                          </button>
+                return (
+                  <ReactMarkdown
+                    key={seg.key}
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      code({ className, children, ...props }) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const content = String(children).replace(/\n$/, '');
+
+                        if (match) {
+                          return (
+                            <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2 relative group/code">
+                              <button
+                                onClick={() => handleCopy(content)}
+                                className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-bg-elevated border border-border text-text-faint
+                                           hover:text-text-secondary opacity-0 group-hover/code:opacity-100 transition-opacity text-[11px]"
+                                title="Copy code"
+                              >
+                                {copiedBlock === content ? 'Copied!' : 'Copy'}
+                              </button>
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            </pre>
+                          );
+                        }
+
+                        return (
                           <code className={className} {...props}>
                             {children}
                           </code>
-                        </pre>
-                      );
-                    }
-
-                    return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                  pre({ children }) {
-                    return <>{children}</>;
-                  },
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
+                        );
+                      },
+                      pre({ children }) {
+                        return <>{children}</>;
+                      },
+                    }}
+                  >
+                    {seg.content}
+                  </ReactMarkdown>
+                );
+              })}
             </div>
           )}
           {isStreaming && !message.content && (
