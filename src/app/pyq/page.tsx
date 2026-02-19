@@ -6,6 +6,9 @@ import PYQSetup from '@/components/pyq/PYQSetup';
 import PYQQuestionCard from '@/components/pyq/PYQQuestionCard';
 import PYQNavStrip from '@/components/pyq/PYQNavStrip';
 import PYQResults from '@/components/pyq/PYQResults';
+import PYQFullPaperView from '@/components/pyq/PYQFullPaperView';
+import PYQFullPaperTimer from '@/components/pyq/PYQFullPaperTimer';
+import PYQSectionBreakdown from '@/components/pyq/PYQSectionBreakdown';
 import {
   Subject,
   PYQQuestion,
@@ -15,9 +18,12 @@ import {
 } from '@/types';
 import {
   shuffle,
+  groupBySection,
   isAutoCheckable,
   isFillBlank,
   fuzzyMatch,
+  normalizeCorrectAnswer,
+  requiresDiagram,
   calculateTopicBreakdown,
   identifyWeakTopics,
   calculateTotalScore,
@@ -53,7 +59,59 @@ export default function PYQPage() {
     setSetupError(null);
 
     try {
-      if (sessionConfig.mode === 'pyq') {
+      if (sessionConfig.mode === 'full-paper') {
+        // Full paper mode — fetch all questions for a specific year, preserve order
+        const params = new URLSearchParams({
+          subject: sessionConfig.subject,
+          year: String(sessionConfig.paperYear),
+          limit: '150',
+        });
+
+        const res = await fetch(`/api/pyq?${params}`);
+        if (!res.ok) throw new Error('Failed to fetch questions');
+        const data = await res.json();
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapped = (data.questions || []).map((q: any) => ({
+          id: q.id,
+          questionNumber: q.question_number,
+          section: q.section || '',
+          type: q.type || 'short-answer',
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correct_answer || '',
+          solution: q.solution || '',
+          marks: q.marks,
+          topic: q.topic,
+        })) as PYQQuestion[];
+
+        // Filter out diagram-dependent questions (can't be answered without the image)
+        const usable = mapped.filter((q) => !requiresDiagram(q.question));
+
+        if (usable.length === 0) {
+          setSetupError('No questions found for this paper. Try a different year.');
+          setSetupLoading(false);
+          return;
+        }
+
+        // Initialize answers — no shuffle, preserve original order
+        const initialAnswers: Record<string, PYQAnswer> = {};
+        for (const q of usable) {
+          initialAnswers[q.id] = {
+            questionId: q.id,
+            type: q.type,
+            isAnswered: false,
+            isFlagged: false,
+          };
+        }
+
+        setQuestions(usable);
+        setAnswers(initialAnswers);
+        setAutoResults({});
+        setAiFeedback({});
+        setCurrentIndex(0);
+        setPhase('taking');
+      } else if (sessionConfig.mode === 'pyq') {
         // Fetch from database
         const params = new URLSearchParams({
           subject: sessionConfig.subject,
@@ -93,6 +151,9 @@ export default function PYQPage() {
           const marksSet = new Set(sessionConfig.marks);
           filtered = filtered.filter((q) => marksSet.has(q.marks));
         }
+
+        // Filter out diagram-dependent questions (can't be answered without the image)
+        filtered = filtered.filter((q) => !requiresDiagram(q.question));
 
         // Shuffle and limit
         const selected = shuffle(filtered).slice(
@@ -211,11 +272,11 @@ export default function PYQPage() {
       if (!answer?.isAnswered) continue;
 
       if (isAutoCheckable(q.type)) {
-        const studentAnswer = answer.selectedOption || '';
+        const studentAnswer = (answer.selectedOption || '').toUpperCase();
+        const normalized = normalizeCorrectAnswer(q.correctAnswer);
         newAutoResults[q.id] = {
-          isCorrect:
-            studentAnswer.toUpperCase() === q.correctAnswer.toUpperCase(),
-          correctAnswer: q.correctAnswer,
+          isCorrect: studentAnswer === normalized,
+          correctAnswer: normalized,
         };
       } else if (isFillBlank(q.type)) {
         const studentAnswer = answer.textAnswer || '';
@@ -319,6 +380,38 @@ export default function PYQPage() {
     [phase, topicBreakdown],
   );
 
+  // Section breakdown for full-paper results
+  const sectionBreakdown = useMemo(() => {
+    if (phase !== 'results' || config?.mode !== 'full-paper') return [];
+
+    const sections = groupBySection(questions);
+    return sections.map((sec) => {
+      let score = 0;
+      let maxScore = 0;
+      let answered = 0;
+
+      for (const q of sec.questions) {
+        maxScore += q.marks;
+        if (answers[q.id]?.isAnswered) answered++;
+
+        if (autoResults[q.id]?.isCorrect) {
+          score += q.marks;
+        } else if (aiFeedback[q.id]) {
+          score += aiFeedback[q.id].score;
+        }
+      }
+
+      return {
+        section: sec.section,
+        label: sec.label,
+        score,
+        maxScore,
+        answered,
+        total: sec.questions.length,
+      };
+    });
+  }, [phase, config?.mode, questions, answers, autoResults, aiFeedback]);
+
   // Save session once when results phase is entered (after all checking is done)
   const hasSavedRef = useRef(false);
 
@@ -361,9 +454,9 @@ export default function PYQPage() {
     }
   }, [phase]);
 
-  // Keyboard navigation in taking phase
+  // Keyboard navigation in taking phase (not for full-paper mode — it scrolls)
   useEffect(() => {
-    if (phase !== 'taking') return;
+    if (phase !== 'taking' || config?.mode === 'full-paper') return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         setCurrentIndex((prev) => Math.max(0, prev - 1));
@@ -373,7 +466,7 @@ export default function PYQPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [phase, questions.length]);
+  }, [phase, questions.length, config?.mode]);
 
   // Retry wrong questions
   const handleRetryWrong = useCallback(() => {
@@ -427,14 +520,24 @@ export default function PYQPage() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="flex items-center justify-between pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <h1 className="text-[13px] font-semibold text-text-primary">
-            PYQ Practice
+            {config?.mode === 'full-paper' && phase !== 'setup'
+              ? `${config.subject} — ${config.paperYear} Full Paper`
+              : 'PYQ Practice'}
           </h1>
-          {phase === 'taking' && (
-            <span className="text-[11px] text-text-muted">
-              {config?.subject} &middot; {answeredCount}/{questions.length}{' '}
-              answered
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {phase === 'taking' && config?.mode === 'full-paper' && config.timerEnabled && config.durationMinutes && (
+              <PYQFullPaperTimer
+                durationMinutes={config.durationMinutes}
+                onTimeUp={handleSubmit}
+              />
+            )}
+            {phase === 'taking' && (
+              <span className="text-[11px] text-text-muted">
+                {config?.subject} &middot; {answeredCount}/{questions.length}{' '}
+                answered
+              </span>
+            )}
+          </div>
         </header>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
@@ -459,8 +562,20 @@ export default function PYQPage() {
             </div>
           )}
 
-          {/* Taking Phase */}
-          {phase === 'taking' && currentQuestion && (
+          {/* Taking Phase — Full Paper Mode */}
+          {phase === 'taking' && config?.mode === 'full-paper' && (
+            <div className="max-w-2xl mx-auto">
+              <PYQFullPaperView
+                questions={questions}
+                answers={answers}
+                onAnswer={handleAnswer}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          )}
+
+          {/* Taking Phase — Single Question Mode */}
+          {phase === 'taking' && config?.mode !== 'full-paper' && currentQuestion && (
             <div className="max-w-xl mx-auto space-y-5">
               {/* Progress bar */}
               <div className="h-1 bg-bg-elevated rounded-full overflow-hidden">
@@ -552,7 +667,7 @@ export default function PYQPage() {
 
           {/* Results Phase */}
           {phase === 'results' && (
-            <div className="max-w-xl mx-auto space-y-5">
+            <div className={`${config?.mode === 'full-paper' ? 'max-w-2xl' : 'max-w-xl'} mx-auto space-y-5`}>
               {aiError && (
                 <div className="bg-warning/10 border border-warning/30 rounded-md px-4 py-3 text-[12px] text-warning">
                   {aiError}
@@ -568,33 +683,55 @@ export default function PYQPage() {
                 onPracticeWeakTopics={handlePracticeWeakTopics}
               />
 
+              {/* Section breakdown for full-paper mode */}
+              {config?.mode === 'full-paper' && sectionBreakdown.length > 0 && (
+                <PYQSectionBreakdown sections={sectionBreakdown} />
+              )}
+
               {/* Review all questions */}
-              <div className="space-y-3">
-                <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">
-                  Review
-                </h3>
-                {questions.map((q, i) => (
-                  <PYQQuestionCard
-                    key={q.id}
-                    question={q}
-                    index={i}
-                    total={questions.length}
-                    answer={
-                      answers[q.id] || {
-                        questionId: q.id,
-                        type: q.type,
-                        isAnswered: false,
-                        isFlagged: false,
-                      }
-                    }
+              {config?.mode === 'full-paper' ? (
+                <div className="space-y-3">
+                  <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">
+                    Review
+                  </h3>
+                  <PYQFullPaperView
+                    questions={questions}
+                    answers={answers}
                     onAnswer={() => {}}
-                    onToggleFlag={() => {}}
-                    showResult
-                    autoResult={autoResults[q.id]}
-                    aiFeedback={aiFeedback[q.id]}
+                    onSubmit={() => {}}
+                    showResults
+                    autoResults={autoResults}
+                    aiFeedback={aiFeedback}
                   />
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">
+                    Review
+                  </h3>
+                  {questions.map((q, i) => (
+                    <PYQQuestionCard
+                      key={q.id}
+                      question={q}
+                      index={i}
+                      total={questions.length}
+                      answer={
+                        answers[q.id] || {
+                          questionId: q.id,
+                          type: q.type,
+                          isAnswered: false,
+                          isFlagged: false,
+                        }
+                      }
+                      onAnswer={() => {}}
+                      onToggleFlag={() => {}}
+                      showResult
+                      autoResult={autoResults[q.id]}
+                      aiFeedback={aiFeedback[q.id]}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
           </div>

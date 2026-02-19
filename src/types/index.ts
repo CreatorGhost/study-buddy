@@ -143,7 +143,7 @@ export interface PYQIndex {
 }
 
 // PYQ Practice Session Types
-export type PYQPracticeMode = 'pyq' | 'ai-similar';
+export type PYQPracticeMode = 'pyq' | 'ai-similar' | 'full-paper';
 
 export interface PYQSessionConfig {
   subject: Subject;
@@ -151,6 +151,9 @@ export interface PYQSessionConfig {
   marks: number[];
   questionCount: number;
   mode: PYQPracticeMode;
+  paperYear?: number;
+  timerEnabled?: boolean;
+  durationMinutes?: number;
 }
 
 export interface PYQAnswer {
