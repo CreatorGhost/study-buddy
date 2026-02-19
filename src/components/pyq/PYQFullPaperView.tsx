@@ -13,8 +13,8 @@ import PYQTextAnswer from './PYQTextAnswer';
 import PYQLongAnswer from './PYQLongAnswer';
 import PYQSolution from './PYQSolution';
 import PYQAIFeedback from './PYQAIFeedback';
-import { groupBySection, detectLanguage } from '@/lib/pyq-utils';
-import type { PYQQuestion, PYQAnswer, PYQAIFeedback as PYQAIFeedbackType } from '@/types';
+import { groupBySection, detectLanguage, CBSE_PAPER_STRUCTURE, generatePaperInstructions } from '@/lib/pyq-utils';
+import type { PYQQuestion, PYQAnswer, PYQAIFeedback as PYQAIFeedbackType, Subject } from '@/types';
 
 const PYQCodeEditor = dynamic(() => import('./PYQCodeEditor'), { ssr: false });
 
@@ -26,6 +26,7 @@ interface PYQFullPaperViewProps {
   answers: Record<string, PYQAnswer>;
   onAnswer: (questionId: string, update: Partial<PYQAnswer>) => void;
   onSubmit: () => void;
+  subject?: Subject;
   showResults?: boolean;
   autoResults?: Record<string, { isCorrect: boolean; correctAnswer: string }>;
   aiFeedback?: Record<string, PYQAIFeedbackType>;
@@ -36,6 +37,7 @@ export default function PYQFullPaperView({
   answers,
   onAnswer,
   onSubmit,
+  subject,
   showResults = false,
   autoResults = {},
   aiFeedback = {},
@@ -246,8 +248,42 @@ export default function PYQFullPaperView({
 
   const answeredCount = Object.values(answers).filter((a) => a.isAnswered).length;
 
+  const paperDef = subject ? CBSE_PAPER_STRUCTURE[subject] : null;
+  const instructions = subject ? generatePaperInstructions(subject) : [];
+
   return (
     <div className="space-y-0">
+      {/* CBSE paper header — only during taking phase */}
+      {!showResults && subject && paperDef && (
+        <div className="border border-border rounded-lg p-5 mb-4 space-y-3">
+          <div className="text-center space-y-1">
+            <p className="text-[11px] font-medium text-text-faint uppercase tracking-widest">
+              Central Board of Secondary Education
+            </p>
+            <p className="text-[13px] font-semibold text-text-primary">
+              Sample Question Paper — {subject}
+            </p>
+            <div className="flex items-center justify-center gap-4 text-[12px] text-text-secondary">
+              <span>Maximum Marks: {paperDef.totalMarks}</span>
+              <span className="text-border">|</span>
+              <span>Time: 3 Hours</span>
+            </div>
+          </div>
+          <div className="border-t border-border pt-3">
+            <p className="text-[11px] font-semibold text-text-secondary mb-1.5">
+              General Instructions
+            </p>
+            <ol className="list-[lower-roman] pl-5 space-y-0.5">
+              {instructions.map((inst, i) => (
+                <li key={i} className="text-[11px] text-text-muted leading-relaxed">
+                  {inst}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      )}
+
       {/* Sticky section tabs */}
       <div className="sticky top-0 z-10 bg-bg-primary/95 backdrop-blur-sm border-b border-border pb-2 pt-1 -mx-4 px-4">
         <div className="flex gap-1.5 overflow-x-auto scrollbar-none">

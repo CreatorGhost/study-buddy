@@ -154,6 +154,7 @@ export interface PYQSessionConfig {
   paperYear?: number;
   timerEnabled?: boolean;
   durationMinutes?: number;
+  aiGenerated?: boolean;
 }
 
 export interface PYQAnswer {

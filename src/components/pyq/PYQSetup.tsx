@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Sparkles, TrendingDown, FileText, Clock } from 'lucide-react';
+import { AlertTriangle, Sparkles, TrendingDown, FileText } from 'lucide-react';
 import SubjectSelector from '@/components/SubjectSelector';
 import { getMarksForSubject } from '@/lib/pyq-utils';
 import { getTopWeakTopics } from '@/lib/storage';
@@ -29,8 +29,7 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
   const [allMarks, setAllMarks] = useState(true);
   const [questionCount, setQuestionCount] = useState(10);
   const [mode, setMode] = useState<PYQPracticeMode>('pyq');
-  const [timerEnabled, setTimerEnabled] = useState(true);
-  const [paperYear, setPaperYear] = useState<number | null>(null);
+  const [aiGenerated, setAiGenerated] = useState(false);
   const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
 
   // Index data from API
@@ -66,7 +65,6 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
     setAllYears(true);
     setSelectedMarks([]);
     setAllMarks(true);
-    setPaperYear(null);
   }, [subject]);
 
   const subjectData = indexData.find((s) => s.name === subject);
@@ -145,16 +143,15 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
 
   const handleStart = () => {
     if (mode === 'full-paper') {
-      if (!paperYear) return;
       onStart({
         subject,
-        years: [paperYear],
+        years: availableYears,
         marks: availableMarks,
-        questionCount: 999, // full paper — all questions
+        questionCount: 999,
         mode,
-        paperYear,
-        timerEnabled,
-        durationMinutes: timerEnabled ? 180 : undefined,
+        timerEnabled: true,
+        durationMinutes: 180,
+        aiGenerated,
       });
       return;
     }
@@ -177,7 +174,7 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
     !loading &&
     !indexLoading &&
     (mode === 'full-paper'
-      ? !!paperYear
+      ? true
       : (allYears || selectedYears.length > 0) && (allMarks || selectedMarks.length > 0));
 
   return (
@@ -295,6 +292,17 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
             </label>
             <div className="flex flex-wrap gap-1.5">
               <button
+                onClick={() => setMode('full-paper')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                  ${mode === 'full-paper'
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                  }`}
+              >
+                <FileText size={12} />
+                Full Paper
+              </button>
+              <button
                 onClick={() => setMode('pyq')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
                   ${mode === 'pyq'
@@ -315,17 +323,6 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
                 <Sparkles size={12} />
                 AI Similar
               </button>
-              <button
-                onClick={() => setMode('full-paper')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                  ${mode === 'full-paper'
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
-                  }`}
-              >
-                <FileText size={12} />
-                Full Paper
-              </button>
             </div>
             {mode === 'ai-similar' && (
               <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-md bg-warning-subtle border border-warning/20">
@@ -337,39 +334,53 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
             )}
           </div>
 
-          {/* Full Paper: single year picker + timer toggle */}
+          {/* Full Paper: source toggle + info card */}
           {mode === 'full-paper' && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
                 <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
-                  Select Paper Year
+                  Paper Source
                 </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {availableYears.map((year) => (
-                    <button
-                      key={year}
-                      onClick={() => setPaperYear(paperYear === year ? null : year)}
-                      className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                        ${paperYear === year
-                          ? 'bg-accent text-white'
-                          : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
-                        }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setAiGenerated(false)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                      ${!aiGenerated
+                        ? 'bg-accent text-white'
+                        : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                      }`}
+                  >
+                    <FileText size={12} />
+                    From PYQs
+                  </button>
+                  <button
+                    onClick={() => setAiGenerated(true)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                      ${aiGenerated
+                        ? 'bg-accent text-white'
+                        : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                      }`}
+                  >
+                    <Sparkles size={12} />
+                    AI Generated
+                  </button>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={timerEnabled}
-                  onChange={(e) => setTimerEnabled(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-border accent-accent"
-                />
-                <Clock size={13} className="text-text-muted" />
-                <span className="text-[12px] text-text-secondary">3 Hour Timer</span>
-              </label>
+              <div className="bg-bg-elevated border border-border rounded-lg p-4 space-y-2">
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  {aiGenerated
+                    ? 'AI generates a CBSE-format paper: 50% reworded from real PYQs + 50% fresh questions. Includes a 3-hour timer.'
+                    : 'Assembles a CBSE-format paper by picking questions from all available years. Instant, no API cost. Includes a 3-hour timer.'}
+                </p>
+              </div>
+              {aiGenerated && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-warning-subtle border border-warning/20">
+                  <AlertTriangle size={12} className="text-warning shrink-0" />
+                  <span className="text-[11px] text-warning">
+                    Uses AI to generate questions — costs API credits
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -404,11 +415,9 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
           )}
 
           {/* Start Button */}
-          {!canStart && !indexLoading && !loading && (
+          {!canStart && !indexLoading && !loading && mode !== 'full-paper' && (
             <p className="text-[11px] text-text-faint text-center">
-              {mode === 'full-paper'
-                ? 'Select a paper year to start'
-                : 'Select at least one year and one marks category to start'}
+              Select at least one year and one marks category to start
             </p>
           )}
           <button
@@ -417,9 +426,13 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
             className="btn-primary w-full justify-center"
           >
             {loading
-              ? 'Loading questions...'
+              ? mode === 'full-paper' && aiGenerated
+                ? 'Generating paper...'
+                : 'Loading questions...'
               : mode === 'full-paper'
-              ? 'Start Full Paper'
+              ? aiGenerated
+                ? 'Generate Sample Paper'
+                : 'Start Sample Paper'
               : 'Start Practice'}
           </button>
         </>
