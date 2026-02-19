@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   BookOpen,
   Brain,
+  ClipboardList,
   Layers,
   BarChart3,
   GraduationCap,
@@ -16,6 +17,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/learn', label: 'Learn', icon: BookOpen },
   { href: '/quiz', label: 'Quiz', icon: Brain },
+  { href: '/pyq', label: 'PYQ Practice', icon: ClipboardList },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
 ];

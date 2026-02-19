@@ -77,3 +77,122 @@ export interface QuizConfig {
   difficulty: Difficulty;
   questionType: QuestionType;
 }
+
+// PYQ (Previous Year Questions) Types
+export type PYQQuestionType =
+  | 'mcq'
+  | 'assertion-reasoning'
+  | 'short-answer'
+  | 'long-answer'
+  | 'case-based'
+  | 'fill-blank'
+  | 'true-false'
+  | 'coding';
+
+export interface PYQQuestion {
+  id: string;
+  questionNumber: number;
+  section: string;
+  type: PYQQuestionType;
+  question: string;
+  options?: string[];
+  correctAnswer: string;
+  solution: string;
+  marks: number;
+  topic?: string;
+  hasAlternative?: boolean;
+  alternativeQuestion?: PYQQuestion;
+}
+
+export interface PYQSection {
+  name: string;
+  marksPerQuestion: number;
+  totalQuestions: number;
+  description?: string;
+}
+
+export interface PYQPaper {
+  id: string;
+  subject: Subject;
+  year: number;
+  setCode?: string;
+  totalMarks: number;
+  duration: number;
+  sections: PYQSection[];
+  questions: PYQQuestion[];
+  sourceFile: string;
+}
+
+export interface PYQIndex {
+  subjects: {
+    [key in Subject]?: {
+      years: number[];
+      totalPapers: number;
+      totalQuestions: number;
+    };
+  };
+  papers: Array<{
+    id: string;
+    subject: Subject;
+    year: number;
+    setCode?: string;
+    questionCount: number;
+    filePath: string;
+  }>;
+}
+
+// PYQ Practice Session Types
+export type PYQPracticeMode = 'pyq' | 'ai-similar';
+
+export interface PYQSessionConfig {
+  subject: Subject;
+  years: number[];
+  marks: number[];
+  questionCount: number;
+  mode: PYQPracticeMode;
+}
+
+export interface PYQAnswer {
+  questionId: string;
+  type: PYQQuestionType;
+  textAnswer?: string;
+  selectedOption?: string;
+  codeAnswer?: string;
+  imageBase64?: string;
+  isAnswered: boolean;
+  isFlagged: boolean;
+}
+
+export interface PYQAIFeedback {
+  questionId: string;
+  score: number;
+  maxMarks: number;
+  feedback: string;
+  keyPointsMissed: string[];
+  isCorrect: boolean;
+}
+
+export interface PYQSessionResult {
+  id: string;
+  subject: Subject;
+  mode: PYQPracticeMode;
+  years: number[];
+  marksCategory: number[];
+  questions: PYQQuestion[];
+  answers: Record<string, PYQAnswer>;
+  autoResults: Record<string, { isCorrect: boolean; correctAnswer: string }>;
+  aiFeedback: Record<string, PYQAIFeedback>;
+  totalScore: number;
+  maxScore: number;
+  topicBreakdown: Record<string, { correct: number; total: number; marks: number; maxMarks: number }>;
+  weakTopics: string[];
+  createdAt: number;
+}
+
+export interface WeakTopic {
+  subject: Subject;
+  topic: string;
+  accuracy: number;
+  totalAttempted: number;
+  lastAttempted: number;
+}
