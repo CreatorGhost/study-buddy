@@ -117,6 +117,7 @@ export interface PYQPaper {
   year: number;
   setCode?: string;
   totalMarks: number;
+  /** Duration of the exam in minutes */
   duration: number;
   sections: PYQSection[];
   questions: PYQQuestion[];
@@ -178,7 +179,7 @@ export interface PYQSessionResult {
   subject: Subject;
   mode: PYQPracticeMode;
   years: number[];
-  marksCategory: number[];
+  marks: number[];
   questions: PYQQuestion[];
   answers: Record<string, PYQAnswer>;
   autoResults: Record<string, { isCorrect: boolean; correctAnswer: string }>;

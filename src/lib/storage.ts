@@ -147,6 +147,7 @@ export function getPYQResults(): PYQPracticeResult[] {
 export function savePYQResult(result: PYQPracticeResult): void {
   const results = getPYQResults();
   results.unshift(result);
+  if (results.length > 50) results.length = 50;
   setItem(KEYS.pyqResults, results);
   updateStreak();
 }
@@ -302,7 +303,7 @@ export function getDashboardStats() {
     subject: s.subject,
     totalScore: s.totalScore,
     maxScore: s.maxScore,
-    questionCount: s.questions.length,
+    questionCount: s.questions?.length ?? 0,
     createdAt: s.createdAt,
   }));
 

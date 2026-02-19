@@ -36,6 +36,11 @@ function makeFallback(questionId: string, maxMarks: number, feedback: string): C
   return { questionId, score: 0, maxMarks, feedback, keyPointsMissed: [], isCorrect: false };
 }
 
+function clampResult(r: CheckResult, maxMarks: number): CheckResult {
+  const score = Math.max(0, Math.min(Number(r.score) || 0, maxMarks));
+  return { ...r, score, maxMarks, isCorrect: score >= maxMarks };
+}
+
 /**
  * POST /api/pyq/check — batch AI answer evaluation
  */
@@ -72,6 +77,7 @@ export async function POST(req: NextRequest) {
     );
 
     const allResults: CheckResult[] = [];
+    const marksById = new Map(questions.map(q => [q.id, q.marks]));
     const promises: Promise<void>[] = [];
 
     // 1. Text-based questions (batch)
@@ -92,9 +98,12 @@ export async function POST(req: NextRequest) {
                 : '';
             const parsed = parseJsonResponse(text);
             if (Array.isArray(parsed?.results)) {
-              allResults.push(...parsed.results);
+              for (const r of parsed.results) {
+                allResults.push(clampResult(r, marksById.get(r.questionId) ?? r.maxMarks));
+              }
             } else if (parsed?.results != null) {
-              allResults.push(parsed.results as CheckResult);
+              const r = parsed.results as CheckResult;
+              allResults.push(clampResult(r, marksById.get(r.questionId) ?? r.maxMarks));
             } else {
               console.error('Text check parse failed');
               for (const q of textQuestions) {
@@ -140,9 +149,12 @@ export async function POST(req: NextRequest) {
                 : '';
             const parsed = parseJsonResponse(text);
             if (Array.isArray(parsed?.results)) {
-              allResults.push(...parsed.results);
+              for (const r of parsed.results) {
+                allResults.push(clampResult(r, marksById.get(r.questionId) ?? r.maxMarks));
+              }
             } else if (parsed?.results != null) {
-              allResults.push(parsed.results as CheckResult);
+              const r = parsed.results as CheckResult;
+              allResults.push(clampResult(r, marksById.get(r.questionId) ?? r.maxMarks));
             } else {
               console.error('Code check parse failed');
               for (const q of codeQuestions) {
@@ -207,14 +219,15 @@ export async function POST(req: NextRequest) {
                 : '';
             const parsed = parseJsonResponse(text);
             if (parsed) {
-              allResults.push({
+              const raw: CheckResult = {
                 questionId: q.id,
                 score: (parsed.score as number) ?? 0,
                 maxMarks: (parsed.maxMarks as number) ?? q.marks,
                 feedback: (parsed.feedback as string) ?? 'No feedback available.',
                 keyPointsMissed: (parsed.keyPointsMissed as string[]) ?? [],
                 isCorrect: (parsed.isCorrect as boolean) ?? false,
-              });
+              };
+              allResults.push(clampResult(raw, q.marks));
             } else {
               console.error(`Image check parse failed for question ${q.id}`);
               allResults.push(makeFallback(q.id, q.marks, 'Could not parse evaluation response. Please try again.'));

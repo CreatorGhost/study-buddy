@@ -330,7 +330,7 @@ export default function PYQPage() {
         subject: config.subject,
         mode: config.mode,
         years: config.years,
-        marksCategory: config.marks,
+        marks: config.marks,
         questions,
         answers,
         autoResults,
@@ -420,15 +420,6 @@ export default function PYQPage() {
     (a) => a.isAnswered,
   ).length;
   const currentQuestion = questions[currentIndex];
-
-  const wrongCount = useMemo(() => {
-    if (phase !== 'results') return 0;
-    return questions.filter((q) => {
-      if (autoResults[q.id]) return !autoResults[q.id].isCorrect;
-      if (aiFeedback[q.id]) return !aiFeedback[q.id].isCorrect;
-      return true;
-    }).length;
-  }, [phase, questions, autoResults, aiFeedback]);
 
   return (
     <>
@@ -571,7 +562,6 @@ export default function PYQPage() {
                 maxScore={maxScore}
                 topicBreakdown={topicBreakdown}
                 weakTopics={weakTopics}
-                wrongCount={wrongCount}
                 onRetryWrong={handleRetryWrong}
                 onNewSession={handleNewSession}
                 onPracticeWeakTopics={handlePracticeWeakTopics}

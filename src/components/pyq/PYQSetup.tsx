@@ -68,7 +68,9 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
 
   const subjectData = indexData.find((s) => s.name === subject);
   const availableYears = subjectData?.years || [];
-  const availableMarks = getMarksForSubject(subject);
+  const availableMarks = subjectData?.markCounts
+    ? Object.keys(subjectData.markCounts).map(Number).sort((a, b) => a - b)
+    : getMarksForSubject(subject);
 
   const toggleYear = (year: number) => {
     if (allYears) {
