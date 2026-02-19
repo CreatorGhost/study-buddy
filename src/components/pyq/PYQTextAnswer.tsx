@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
+
 interface PYQTextAnswerProps {
   value: string;
   onChange: (value: string) => void;
@@ -15,8 +17,21 @@ export default function PYQTextAnswer({
   placeholder = 'Type your answer...',
   rows = 4,
 }: PYQTextAnswerProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.max(
+        textareaRef.current.scrollHeight,
+        rows * 24
+      ) + 'px';
+    }
+  }, [value, rows]);
+
   return (
     <textarea
+      ref={textareaRef}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}

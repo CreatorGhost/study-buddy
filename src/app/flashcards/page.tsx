@@ -102,6 +102,15 @@ export default function FlashcardsPage() {
 
     if (currentCardIndex < updatedCards.length - 1) {
       setTimeout(() => setCurrentCardIndex(prev => prev + 1), 250);
+    } else {
+      // Last card marked — check if all mastered
+      const toReview = updatedCards.filter(c => c.status === 'review').length;
+      if (toReview === 0) {
+        setTimeout(() => {
+          setPhase('home');
+          setActiveDeck(null);
+        }, 500);
+      }
     }
   };
 
@@ -191,7 +200,7 @@ export default function FlashcardsPage() {
                         <p className="text-[13px] font-medium text-text-primary">{deck.topic}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[11px] text-text-muted">{deck.subject}</span>
-                          <span className="text-[11px] text-text-faint">{deck.cards.length} cards</span>
+                          <span className="text-[11px] text-text-muted">{deck.cards.length} cards</span>
                           <span className="text-[11px] text-success">
                             {deck.cards.filter(c => c.status === 'got-it').length} mastered
                           </span>
@@ -283,6 +292,20 @@ export default function FlashcardsPage() {
                 <span className="text-[11px] text-success">{gotItCount} mastered</span>
                 <span className="text-[11px] text-error">{reviewCount} to review</span>
               </div>
+
+              {/* Deck complete banner */}
+              {gotItCount === activeDeck.cards.length && (
+                <div className="bg-success/10 border border-success/20 rounded-lg p-4 mb-4 text-center animate-fade-in">
+                  <p className="text-[13px] font-medium text-success mb-1">Deck Complete!</p>
+                  <p className="text-[12px] text-text-muted">All {activeDeck.cards.length} cards mastered</p>
+                </div>
+              )}
+              {currentCardIndex === activeDeck.cards.length - 1 && reviewCount > 0 && gotItCount < activeDeck.cards.length && (
+                <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 mb-4 text-center animate-fade-in">
+                  <p className="text-[13px] font-medium text-warning mb-1">End of deck</p>
+                  <p className="text-[12px] text-text-muted">{reviewCount} card{reviewCount !== 1 ? 's' : ''} still need review — navigate back to revisit</p>
+                </div>
+              )}
 
               <Flashcard key={currentCard.id} card={currentCard} onMark={handleMark} />
 

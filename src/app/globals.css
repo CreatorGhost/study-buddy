@@ -159,6 +159,7 @@ body {
    Accent & Text Gradients
    ───────────────────────────────────────────────────── */
 .text-gradient {
+  color: var(--accent-light); /* fallback for browsers without background-clip: text */
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -494,6 +495,11 @@ body {
 }
 
 .prose-study a:hover { text-decoration: underline; }
+.prose-study a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 
 .prose-study table {
   width: 100%;
@@ -521,4 +527,18 @@ body {
   border: none;
   border-top: 1px solid var(--border);
   margin: 1.5em 0;
+}
+
+/* Select option styling for dark theme */
+select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Mobile optimization for page glow */
+@media (max-width: 640px) {
+  .page-glow {
+    background:
+      radial-gradient(ellipse 100% 40% at 50% -10%, rgba(94, 106, 210, 0.03) 0%, transparent 50%);
+  }
 }

@@ -438,6 +438,7 @@ export default function PYQPage() {
         </header>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
+          <div key={phase} className="animate-fade-in">
           {/* Setup Phase */}
           {phase === 'setup' && (
             <div className="max-w-md mx-auto space-y-5 animate-fade-in-up">
@@ -596,6 +597,7 @@ export default function PYQPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
     </>

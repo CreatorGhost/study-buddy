@@ -34,6 +34,7 @@ export default function LearnPage() {
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messagesRef = useRef<Message[]>([]);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -157,7 +158,7 @@ export default function LearnPage() {
 
     setMessages(prev => [...prev, assistantMessage]);
 
-    let finalMessages = [...newMessages, assistantMessage];
+    messagesRef.current = [...newMessages, assistantMessage];
 
     try {
       const response = await fetch('/api/chat', {
@@ -192,7 +193,7 @@ export default function LearnPage() {
               setActiveAgent(event.agent);
               setMessages(prev => {
                 const updated = prev.map(m => m.id === assistantId ? { ...m, agent: event.agent } : m);
-                finalMessages = updated;
+                messagesRef.current = updated;
                 return updated;
               });
             }
@@ -202,7 +203,7 @@ export default function LearnPage() {
                 const updated = prev.map(m =>
                   m.id === assistantId ? { ...m, content: m.content + event.data } : m
                 );
-                finalMessages = updated;
+                messagesRef.current = updated;
                 return updated;
               });
             }
@@ -210,7 +211,7 @@ export default function LearnPage() {
             if (event.type === 'done') {
               setIsStreaming(false);
               setActiveAgent(null);
-              saveConversation(finalMessages, convId, subject);
+              saveConversation(messagesRef.current, convId, subject);
             }
 
             if (event.type === 'error') {
@@ -220,7 +221,7 @@ export default function LearnPage() {
                     ? { ...m, content: `Something went wrong: ${event.data}` }
                     : m
                 );
-                finalMessages = updated;
+                messagesRef.current = updated;
                 return updated;
               });
               setIsStreaming(false);
@@ -237,7 +238,7 @@ export default function LearnPage() {
             ? { ...m, content: 'Could not connect to the server. Please try again.' }
             : m
         );
-        finalMessages = updated;
+        messagesRef.current = updated;
         return updated;
       });
       setIsStreaming(false);
@@ -308,13 +309,14 @@ export default function LearnPage() {
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium truncate">{conv.title}</p>
-                        <p className="text-[11px] text-text-faint">{conv.subject}</p>
+                        <p className="text-[11px] text-text-muted">{conv.subject}</p>
                       </div>
                       <button
                         onClick={e => { e.stopPropagation(); deleteConversation(conv.id); }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-text-faint hover:text-error transition-all"
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-2 rounded text-text-faint hover:text-error transition-all"
+                        aria-label="Delete conversation"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}

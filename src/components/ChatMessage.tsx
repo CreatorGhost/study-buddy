@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -26,6 +26,13 @@ interface ChatMessageProps {
 export default function ChatMessage({ message, isStreaming }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const badge = message.agent ? agentBadge[message.agent] : null;
+  const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
+
+  const handleCopy = useCallback((code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedBlock(code);
+    setTimeout(() => setCopiedBlock(null), 2000);
+  }, []);
 
   const completeMermaidBlocks = useMemo(() => {
     const set = new Set<string>();
@@ -45,7 +52,7 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
         </div>
       )}
 
-      <div className={`max-w-[75%] ${isUser ? 'order-first' : ''}`}>
+      <div className={`max-w-[85%] sm:max-w-[75%] ${isUser ? 'order-first' : ''}`}>
         {!isUser && badge && (
           <span className="text-[11px] font-medium text-text-muted mb-1 block">
             {badge.label}
@@ -89,7 +96,15 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
 
                     if (match) {
                       return (
-                        <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2">
+                        <pre className="bg-bg-inset border border-border rounded-lg p-3 overflow-x-auto my-2 relative group/code">
+                          <button
+                            onClick={() => handleCopy(content)}
+                            className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-bg-elevated border border-border text-text-faint
+                                       hover:text-text-secondary opacity-0 group-hover/code:opacity-100 transition-opacity text-[11px]"
+                            title="Copy code"
+                          >
+                            {copiedBlock === content ? 'Copied!' : 'Copy'}
+                          </button>
                           <code className={className} {...props}>
                             {children}
                           </code>
@@ -112,7 +127,12 @@ export default function ChatMessage({ message, isStreaming }: ChatMessageProps) 
               </ReactMarkdown>
             </div>
           )}
-          {isStreaming && (
+          {isStreaming && !message.content && (
+            <div className="typing-indicator flex items-center gap-1 py-1">
+              <span /><span /><span />
+            </div>
+          )}
+          {isStreaming && message.content && (
             <span className="inline-block w-[3px] h-[14px] bg-text-muted rounded-sm animate-pulse ml-0.5 -mb-0.5" />
           )}
         </div>
