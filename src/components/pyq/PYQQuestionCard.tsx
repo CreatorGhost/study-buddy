@@ -7,6 +7,9 @@ import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Flag } from 'lucide-react';
+
+const REMARK_PLUGINS = [remarkMath, remarkGfm];
+const REHYPE_PLUGINS = [rehypeKatex];
 import PYQOptionList from './PYQOptionList';
 import PYQTextAnswer from './PYQTextAnswer';
 import PYQLongAnswer from './PYQLongAnswer';
@@ -239,8 +242,8 @@ export default function PYQQuestionCard({
       {/* Question text */}
       <div className="text-[13px] font-medium text-text-primary leading-relaxed prose-study">
         <ReactMarkdown
-          remarkPlugins={[remarkMath, remarkGfm]}
-          rehypePlugins={[rehypeKatex]}
+          remarkPlugins={REMARK_PLUGINS}
+          rehypePlugins={REHYPE_PLUGINS}
         >
           {question.question}
         </ReactMarkdown>
