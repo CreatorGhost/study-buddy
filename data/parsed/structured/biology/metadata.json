@@ -1,0 +1,95 @@
+{
+  "subject": "Biology",
+  "years": [
+    2025,
+    2023,
+    2022,
+    2020,
+    2019,
+    2018,
+    2017,
+    2015,
+    2014
+  ],
+  "markCategories": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "papers": [
+    {
+      "id": "biology_2025",
+      "year": 2025,
+      "setCode": "1/57/1/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 58
+    },
+    {
+      "id": "biology_2023",
+      "year": 2023,
+      "setCode": "57/1/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 33
+    },
+    {
+      "id": "biology_2022",
+      "year": 2022,
+      "setCode": "57/2/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 13
+    },
+    {
+      "id": "biology_2020",
+      "year": 2020,
+      "setCode": "57/2/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 27
+    },
+    {
+      "id": "biology_2019",
+      "year": 2019,
+      "setCode": null,
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 27
+    },
+    {
+      "id": "biology_2018",
+      "year": 2018,
+      "setCode": "57/3",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "biology_2017",
+      "year": 2017,
+      "setCode": "57/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "biology_2015",
+      "year": 2015,
+      "setCode": "57/2",
+      "totalMarks": 100,
+      "duration": 180,
+      "questionCount": 26
+    },
+    {
+      "id": "biology_2014",
+      "year": 2014,
+      "setCode": "57/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 30
+    }
+  ],
+  "totalQuestions": 266
+}

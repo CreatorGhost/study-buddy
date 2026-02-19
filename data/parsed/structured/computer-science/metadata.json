@@ -1,0 +1,113 @@
+{
+  "subject": "Computer Science",
+  "years": [
+    2025,
+    2024,
+    2022,
+    2020,
+    2019,
+    2018,
+    2017,
+    2016,
+    2015,
+    2014,
+    2013
+  ],
+  "markCategories": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "papers": [
+    {
+      "id": "computer-science_2025",
+      "year": 2025,
+      "setCode": "91/4/2025",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 53
+    },
+    {
+      "id": "computer-science_2024",
+      "year": 2024,
+      "setCode": "91",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 40
+    },
+    {
+      "id": "computer-science_2022",
+      "year": 2022,
+      "setCode": "Set-1 (91)",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 35
+    },
+    {
+      "id": "computer-science_2020",
+      "year": 2020,
+      "setCode": "91/C (Set-4)",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 49
+    },
+    {
+      "id": "computer-science_2019",
+      "year": 2019,
+      "setCode": null,
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 39
+    },
+    {
+      "id": "computer-science_2018",
+      "year": 2018,
+      "setCode": "91, Set-4",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 28
+    },
+    {
+      "id": "computer-science_2017",
+      "year": 2017,
+      "setCode": "GBM Set-4, Code No. 91",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 62
+    },
+    {
+      "id": "computer-science_2016",
+      "year": 2016,
+      "setCode": "91",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 61
+    },
+    {
+      "id": "computer-science_2015",
+      "year": 2015,
+      "setCode": "SS0 Set-4 (Code No. 91)",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 57
+    },
+    {
+      "id": "computer-science_2014",
+      "year": 2014,
+      "setCode": "OSR / Code No. 91",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 45
+    },
+    {
+      "id": "computer-science_2013",
+      "year": 2013,
+      "setCode": "SKS/1 — Code No. 91/1",
+      "totalMarks": 70,
+      "duration": 180,
+      "questionCount": 45
+    }
+  ],
+  "totalQuestions": 514
+}
