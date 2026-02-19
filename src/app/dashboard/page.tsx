@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { ProgressBar, StatCard } from '@/components/ProgressChart';
 import { getDashboardStats } from '@/lib/storage';
-import { Trophy, BookOpen, Brain, Flame, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Trophy, BookOpen, Brain, Flame, AlertTriangle, ArrowRight, ClipboardList, Target } from 'lucide-react';
 import Link from 'next/link';
 
 interface DashboardData {
@@ -15,6 +15,11 @@ interface DashboardData {
   weakAreas: { topic: string; subject: string; avgScore: number }[];
   subjectStats: { subject: string; topicsCount: number; avgScore: number; quizCount: number }[];
   recentQuizzes: { id: string; subject: string; topic: string; score: number; total: number; date: number }[];
+  totalPYQSessions: number;
+  pyqAverageScore: number;
+  pyqSubjectStats: { subject: string; sessions: number; avgScore: number }[];
+  pyqWeakTopics: { subject: string; topic: string; accuracy: number; totalAttempted: number; lastAttempted: number }[];
+  recentPYQ: { id: string; subject: string; totalScore: number; maxScore: number; questionCount: number; createdAt: number }[];
 }
 
 export default function DashboardPage() {
@@ -26,7 +31,7 @@ export default function DashboardPage() {
 
   if (!stats) return null;
 
-  const isEmpty = stats.totalQuizzes === 0 && stats.totalTopics === 0;
+  const isEmpty = stats.totalQuizzes === 0 && stats.totalTopics === 0 && stats.totalPYQSessions === 0;
 
   return (
     <>
@@ -42,11 +47,11 @@ export default function DashboardPage() {
               <Trophy size={24} className="text-text-faint mb-3" strokeWidth={1.5} />
               <h2 className="text-[15px] font-medium text-text-primary mb-1">No data yet</h2>
               <p className="text-[12px] text-text-muted mb-5 text-center max-w-xs">
-                Take a quiz or study a topic to start tracking progress
+                Take a quiz or practice PYQs to start tracking progress
               </p>
               <div className="flex gap-2">
-                <Link href="/learn" className="btn-ghost">
-                  Start Learning
+                <Link href="/pyq" className="btn-ghost">
+                  Practice PYQs
                 </Link>
                 <Link href="/quiz" className="btn-primary">
                   Take a Quiz
@@ -78,6 +83,90 @@ export default function DashboardPage() {
                   icon={<Flame size={14} className="text-accent" strokeWidth={1.75} />}
                 />
               </div>
+
+              {/* PYQ Practice Stats */}
+              {stats.totalPYQSessions > 0 && (
+                <div className="bg-bg-surface border border-border rounded-lg p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-1.5">
+                      <ClipboardList size={13} className="text-accent" />
+                      <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">PYQ Practice</h3>
+                    </div>
+                    <Link
+                      href="/pyq"
+                      className="flex items-center gap-1 text-[11px] text-accent-light hover:underline"
+                    >
+                      Practice More <ArrowRight size={10} />
+                    </Link>
+                  </div>
+
+                  {/* PYQ summary row */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-bg-elevated rounded-md px-3 py-2.5">
+                      <p className="text-[11px] text-text-faint mb-0.5">Sessions</p>
+                      <p className="text-[15px] font-semibold text-text-primary">{stats.totalPYQSessions}</p>
+                    </div>
+                    <div className="bg-bg-elevated rounded-md px-3 py-2.5">
+                      <p className="text-[11px] text-text-faint mb-0.5">Avg Score</p>
+                      <p className={`text-[15px] font-semibold ${
+                        stats.pyqAverageScore >= 70 ? 'text-success'
+                          : stats.pyqAverageScore >= 50 ? 'text-warning'
+                          : 'text-error'
+                      }`}>{stats.pyqAverageScore}%</p>
+                    </div>
+                  </div>
+
+                  {/* PYQ per-subject progress */}
+                  {stats.pyqSubjectStats.length > 0 && (
+                    <div className="space-y-3">
+                      {stats.pyqSubjectStats.map(s => (
+                        <ProgressBar
+                          key={s.subject}
+                          label={s.subject}
+                          value={s.avgScore}
+                          subtitle={`${s.sessions} session${s.sessions !== 1 ? 's' : ''}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PYQ Weak Topics */}
+              {stats.pyqWeakTopics.length > 0 && (
+                <div className="bg-bg-surface border border-border rounded-lg p-5">
+                  <div className="flex items-center gap-1.5 mb-4">
+                    <Target size={13} className="text-warning" />
+                    <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider">PYQ Weak Topics</h3>
+                  </div>
+                  <div className="space-y-1">
+                    {stats.pyqWeakTopics.map((topic, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
+                      >
+                        <div>
+                          <p className="text-[13px] font-medium text-text-primary">{topic.topic}</p>
+                          <p className="text-[11px] text-text-faint">
+                            {topic.subject} · {topic.totalAttempted} attempt{topic.totalAttempted !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[12px] font-medium text-error">
+                            {Math.round(topic.accuracy * 100)}%
+                          </span>
+                          <Link
+                            href="/pyq"
+                            className="flex items-center gap-1 text-[11px] text-accent-light hover:underline"
+                          >
+                            Practice <ArrowRight size={10} />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Subject Progress */}
               {stats.subjectStats.length > 0 && (
@@ -126,6 +215,42 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent PYQ Sessions */}
+              {stats.recentPYQ.length > 0 && (
+                <div className="bg-bg-surface border border-border rounded-lg p-5">
+                  <h3 className="text-[12px] font-medium text-text-muted uppercase tracking-wider mb-4">Recent PYQ Sessions</h3>
+                  <div className="space-y-1">
+                    {stats.recentPYQ.map(session => {
+                      const pct = session.maxScore > 0 ? session.totalScore / session.maxScore : 0;
+                      return (
+                        <div
+                          key={session.id}
+                          className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-md hover:bg-bg-elevated transition-colors"
+                        >
+                          <div>
+                            <p className="text-[13px] font-medium text-text-primary">{session.subject}</p>
+                            <p className="text-[11px] text-text-faint">
+                              {session.questionCount} questions · {new Date(session.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span
+                            className={`text-[12px] font-medium ${
+                              pct >= 0.7
+                                ? 'text-success'
+                                : pct >= 0.5
+                                ? 'text-warning'
+                                : 'text-error'
+                            }`}
+                          >
+                            {session.totalScore}/{session.maxScore}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

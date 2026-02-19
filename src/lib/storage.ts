@@ -1,6 +1,6 @@
 'use client';
 
-import { QuizResult, FlashcardDeck, StudyProgress, Subject } from '@/types';
+import { QuizResult, FlashcardDeck, StudyProgress, Subject, WeakTopic, PYQSessionResult } from '@/types';
 
 const KEYS = {
   quizResults: 'studybuddy_quiz_results',
@@ -8,6 +8,9 @@ const KEYS = {
   studyProgress: 'studybuddy_progress',
   streak: 'studybuddy_streak',
   lastStudyDate: 'studybuddy_last_study',
+  pyqResults: 'studybuddy_pyq_results',
+  pyqSessions: 'studybuddy_pyq_sessions',
+  weakTopics: 'studybuddy_weak_topics',
 };
 
 function getItem<T>(key: string, fallback: T): T {
@@ -22,7 +25,11 @@ function getItem<T>(key: string, fallback: T): T {
 
 function setItem<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // QuotaExceededError or SecurityError — silently fail
+  }
 }
 
 // Quiz Results
@@ -119,6 +126,100 @@ export function getStreak(): number {
   return getItem<number>(KEYS.streak, 0);
 }
 
+// PYQ Practice Results (localStorage fallback when Supabase unavailable)
+export interface PYQPracticeResult {
+  id: string;
+  subject: Subject;
+  marksCategory: number;
+  year: number | null;
+  questionsAttempted: number;
+  questionsCorrect: number;
+  scorePercentage: number;
+  weakTopics: string[];
+  answers: Record<string, string>;
+  createdAt: number;
+}
+
+export function getPYQResults(): PYQPracticeResult[] {
+  return getItem<PYQPracticeResult[]>(KEYS.pyqResults, []);
+}
+
+export function savePYQResult(result: PYQPracticeResult): void {
+  const results = getPYQResults();
+  results.unshift(result);
+  setItem(KEYS.pyqResults, results);
+  updateStreak();
+}
+
+export function getPYQResultsBySubject(subject: Subject): PYQPracticeResult[] {
+  return getPYQResults().filter(r => r.subject === subject);
+}
+
+export function getPYQResultsByMarks(subject: Subject, marks: number): PYQPracticeResult[] {
+  return getPYQResults().filter(r => r.subject === subject && r.marksCategory === marks);
+}
+
+// PYQ Session Results (full session data)
+export function getPYQSessions(): PYQSessionResult[] {
+  return getItem<PYQSessionResult[]>(KEYS.pyqSessions, []);
+}
+
+export function savePYQSession(session: PYQSessionResult): void {
+  const sessions = getPYQSessions();
+  sessions.unshift(session);
+  // Keep max 50 sessions to avoid localStorage limits
+  if (sessions.length > 50) sessions.length = 50;
+  setItem(KEYS.pyqSessions, sessions);
+  updateWeakTopics(session);
+  updateStreak();
+}
+
+// Weak Topic Tracking
+export function getWeakTopics(subject?: Subject): WeakTopic[] {
+  const all = getItem<WeakTopic[]>(KEYS.weakTopics, []);
+  if (subject) return all.filter(t => t.subject === subject);
+  return all;
+}
+
+function updateWeakTopics(session: PYQSessionResult): void {
+  const weakTopics = getItem<WeakTopic[]>(KEYS.weakTopics, []);
+
+  for (const [topic, data] of Object.entries(session.topicBreakdown)) {
+    if (data.total === 0) continue;
+
+    const accuracy = data.maxMarks > 0 ? data.marks / data.maxMarks : 0;
+    const existing = weakTopics.find(
+      t => t.subject === session.subject && t.topic === topic,
+    );
+
+    if (existing) {
+      // Rolling average with decay toward recent performance
+      existing.accuracy = existing.accuracy * 0.4 + accuracy * 0.6;
+      existing.totalAttempted += data.total;
+      existing.lastAttempted = Date.now();
+    } else {
+      weakTopics.push({
+        subject: session.subject,
+        topic,
+        accuracy,
+        totalAttempted: data.total,
+        lastAttempted: Date.now(),
+      });
+    }
+  }
+
+  // Sort by accuracy ascending (weakest first)
+  weakTopics.sort((a, b) => a.accuracy - b.accuracy);
+
+  setItem(KEYS.weakTopics, weakTopics);
+}
+
+export function getTopWeakTopics(subject: Subject, count = 3): WeakTopic[] {
+  return getWeakTopics(subject)
+    .filter(t => t.accuracy < 0.6 && t.totalAttempted >= 2)
+    .slice(0, count);
+}
+
 // Dashboard stats
 export function getDashboardStats() {
   const quizResults = getQuizResults();
@@ -169,6 +270,42 @@ export function getDashboardStats() {
     };
   });
 
+  // PYQ stats
+  const pyqSessions = getPYQSessions();
+  const pyqWeakTopics = getWeakTopics();
+  const totalPYQSessions = pyqSessions.length;
+  const pyqAverageScore = totalPYQSessions > 0
+    ? Math.round(pyqSessions.reduce((sum, s) => sum + (s.maxScore > 0 ? (s.totalScore / s.maxScore) * 100 : 0), 0) / totalPYQSessions)
+    : 0;
+
+  // PYQ per-subject breakdown
+  const pyqSubjectMap = new Map<string, { sessions: number; totalScore: number; maxScore: number }>();
+  for (const s of pyqSessions) {
+    const existing = pyqSubjectMap.get(s.subject);
+    if (existing) {
+      existing.sessions++;
+      existing.totalScore += s.totalScore;
+      existing.maxScore += s.maxScore;
+    } else {
+      pyqSubjectMap.set(s.subject, { sessions: 1, totalScore: s.totalScore, maxScore: s.maxScore });
+    }
+  }
+  const pyqSubjectStats = Array.from(pyqSubjectMap.entries()).map(([subject, data]) => ({
+    subject,
+    sessions: data.sessions,
+    avgScore: data.maxScore > 0 ? Math.round((data.totalScore / data.maxScore) * 100) : 0,
+  }));
+
+  // Recent PYQ sessions (last 10)
+  const recentPYQ = pyqSessions.slice(0, 10).map(s => ({
+    id: s.id,
+    subject: s.subject,
+    totalScore: s.totalScore,
+    maxScore: s.maxScore,
+    questionCount: s.questions.length,
+    createdAt: s.createdAt,
+  }));
+
   return {
     totalQuizzes,
     averageScore: Math.round(averageScore),
@@ -177,5 +314,10 @@ export function getDashboardStats() {
     weakAreas,
     subjectStats,
     recentQuizzes: quizResults.slice(0, 10),
+    totalPYQSessions,
+    pyqAverageScore,
+    pyqSubjectStats,
+    pyqWeakTopics: pyqWeakTopics.filter(t => t.accuracy < 0.6 && t.totalAttempted >= 2).slice(0, 5),
+    recentPYQ,
   };
 }
