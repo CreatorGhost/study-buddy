@@ -65,25 +65,25 @@ export function normalizeCorrectAnswer(correctAnswer: string): string {
   if (!correctAnswer) return '';
   const trimmed = correctAnswer.trim();
 
-  // Already a single letter: "A", "a", "B", etc.
-  if (/^[A-Da-d]$/.test(trimmed)) {
+  // Already a single letter: "A", "a", "E", etc.
+  if (/^[A-Za-z]$/.test(trimmed)) {
     return trimmed.toUpperCase();
   }
 
-  // Pattern: "(a) ...", "(a)...", "(A) ..."
-  const parenMatch = trimmed.match(/^\(([A-Da-d])\)/);
+  // Pattern: "(a) ...", "(a)...", "(E) ..."
+  const parenMatch = trimmed.match(/^\(([A-Za-z])\)/);
   if (parenMatch) {
     return parenMatch[1].toUpperCase();
   }
 
-  // Pattern: "a) ...", "A) ..."
-  const bracketMatch = trimmed.match(/^([A-Da-d])\)/);
+  // Pattern: "a) ...", "E) ..."
+  const bracketMatch = trimmed.match(/^([A-Za-z])\)/);
   if (bracketMatch) {
     return bracketMatch[1].toUpperCase();
   }
 
-  // Pattern: "a. ...", "A. ..."
-  const dotMatch = trimmed.match(/^([A-Da-d])\./);
+  // Pattern: "a. ...", "E. ..."
+  const dotMatch = trimmed.match(/^([A-Za-z])\./);
   if (dotMatch) {
     return dotMatch[1].toUpperCase();
   }
