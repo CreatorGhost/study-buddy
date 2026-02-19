@@ -27,9 +27,18 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as GenerateRequest;
     const { subject, marks, count, topic, type, sampleQuestions } = body;
 
-    if (!subject || !marks || !count) {
+    const VALID_SUBJECTS: Subject[] = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'Computer Science'];
+
+    if (!subject || marks == null || !count) {
       return NextResponse.json(
         { error: 'Missing required fields: subject, marks, count' },
+        { status: 400 }
+      );
+    }
+
+    if (!VALID_SUBJECTS.includes(subject)) {
+      return NextResponse.json(
+        { error: 'Invalid subject' },
         { status: 400 }
       );
     }

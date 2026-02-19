@@ -42,9 +42,18 @@ export async function POST(req: NextRequest) {
       questions: QuestionInput[];
     };
 
+    const VALID_SUBJECTS: Subject[] = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'Computer Science'];
+
     if (!subject || !questions || questions.length === 0) {
       return NextResponse.json(
         { error: 'Missing required fields: subject, questions' },
+        { status: 400 }
+      );
+    }
+
+    if (!VALID_SUBJECTS.includes(subject)) {
+      return NextResponse.json(
+        { error: 'Invalid subject' },
         { status: 400 }
       );
     }
@@ -162,8 +171,11 @@ export async function POST(req: NextRequest) {
               q.marks
             );
 
-            // Strip data URL prefix if present
-            const base64Data = q.imageBase64!.replace(
+            // Extract media type and strip data URL prefix
+            const dataUrl = q.imageBase64!;
+            const mediaTypeMatch = dataUrl.match(/^data:(image\/\w+);base64,/);
+            const mediaType = (mediaTypeMatch?.[1] || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+            const base64Data = dataUrl.replace(
               /^data:image\/\w+;base64,/,
               ''
             );
@@ -179,7 +191,7 @@ export async function POST(req: NextRequest) {
                       type: 'image',
                       source: {
                         type: 'base64',
-                        media_type: 'image/jpeg',
+                        media_type: mediaType,
                         data: base64Data,
                       },
                     },

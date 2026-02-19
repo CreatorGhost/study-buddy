@@ -79,13 +79,28 @@ async function getIndex(supabase: ReturnType<typeof getSupabase>) {
   }
 
   // Get question counts grouped by subject and marks
-  const { data: counts, error: countsError } = await supabase
-    .from('pyq_questions')
-    .select('subject, marks');
+  // Supabase default SELECT returns max 1000 rows — must paginate since we have 1,579+ questions
+  const allCounts: { subject: string; marks: number }[] = [];
+  const PAGE_SIZE = 1000;
+  let page = 0;
+  let hasMore = true;
 
-  if (countsError) {
-    return NextResponse.json({ error: countsError.message }, { status: 500 });
+  while (hasMore) {
+    const { data: batch, error: countsError } = await supabase
+      .from('pyq_questions')
+      .select('subject, marks')
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+    if (countsError) {
+      return NextResponse.json({ error: countsError.message }, { status: 500 });
+    }
+
+    if (batch) allCounts.push(...batch);
+    hasMore = (batch?.length ?? 0) === PAGE_SIZE;
+    page++;
   }
+
+  const counts = allCounts;
 
   // Aggregate counts
   const subjectStats: Record<string, {
