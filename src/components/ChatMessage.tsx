@@ -34,17 +34,17 @@ interface ContentSegment {
 function splitContent(content: string): ContentSegment[] {
   const segments: ContentSegment[] = [];
   let lastIndex = 0;
+  let mdIndex = 0;
   let mermaidIndex = 0;
 
   const regex = new RegExp(MERMAID_BLOCK_RE.source, 'g');
   let match;
 
   while ((match = regex.exec(content)) !== null) {
-    // Text before this mermaid block
     if (match.index > lastIndex) {
       const text = content.slice(lastIndex, match.index);
       if (text.trim()) {
-        segments.push({ type: 'markdown', content: text, key: `md-${lastIndex}` });
+        segments.push({ type: 'markdown', content: text, key: `md-${mdIndex++}` });
       }
     }
 
@@ -57,16 +57,14 @@ function splitContent(content: string): ContentSegment[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Remaining text after last mermaid block
   if (lastIndex < content.length) {
     const remaining = content.slice(lastIndex);
 
-    // Check for an incomplete/streaming mermaid block at the end
     const incompleteMatch = remaining.match(/```mermaid\n([\s\S]*)$/);
     if (incompleteMatch) {
       const textBefore = remaining.slice(0, incompleteMatch.index);
       if (textBefore.trim()) {
-        segments.push({ type: 'markdown', content: textBefore, key: `md-${lastIndex}` });
+        segments.push({ type: 'markdown', content: textBefore, key: `md-${mdIndex++}` });
       }
       segments.push({
         type: 'mermaid-streaming',
@@ -74,7 +72,7 @@ function splitContent(content: string): ContentSegment[] {
         key: `mermaid-streaming-${mermaidIndex}`,
       });
     } else if (remaining.trim()) {
-      segments.push({ type: 'markdown', content: remaining, key: `md-${lastIndex}` });
+      segments.push({ type: 'markdown', content: remaining, key: `md-${mdIndex++}` });
     }
   }
 
