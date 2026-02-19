@@ -1,5 +1,118 @@
 import { PYQQuestion, PYQAnswer, PYQSessionResult, WeakTopic, Subject } from '@/types';
 
+export interface SectionGroup {
+  section: string;
+  label: string;
+  marksPerQuestion: number;
+  questions: PYQQuestion[];
+}
+
+const SECTION_ORDER = ['A', 'B', 'C', 'D', 'E'];
+
+/**
+ * Group questions by their section field (A, B, C, D, E).
+ * Sorts sections in order and questions within each section by questionNumber.
+ */
+export function groupBySection(questions: PYQQuestion[]): SectionGroup[] {
+  const map = new Map<string, PYQQuestion[]>();
+
+  for (const q of questions) {
+    const sec = (q.section || '').toUpperCase();
+    if (!map.has(sec)) map.set(sec, []);
+    map.get(sec)!.push(q);
+  }
+
+  const sections: SectionGroup[] = [];
+
+  // Sort sections in canonical order, then any extras alphabetically
+  const keys = [...map.keys()].sort((a, b) => {
+    const ai = SECTION_ORDER.indexOf(a);
+    const bi = SECTION_ORDER.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  for (const sec of keys) {
+    const qs = map.get(sec)!.sort((a, b) => {
+      const aNum = typeof a.questionNumber === 'string'
+        ? parseInt(a.questionNumber as unknown as string, 10) || 0
+        : a.questionNumber;
+      const bNum = typeof b.questionNumber === 'string'
+        ? parseInt(b.questionNumber as unknown as string, 10) || 0
+        : b.questionNumber;
+      return aNum - bNum;
+    });
+
+    const marksPerQuestion = qs[0]?.marks || 1;
+    const count = qs.length;
+    const markWord = marksPerQuestion === 1 ? 'Mark' : 'Marks';
+    const label = `Section ${sec} — ${marksPerQuestion} ${markWord} Each (${count} Question${count !== 1 ? 's' : ''})`;
+
+    sections.push({ section: sec, label, marksPerQuestion, questions: qs });
+  }
+
+  return sections;
+}
+
+/**
+ * Extract just the option letter from a correctAnswer string.
+ * Handles formats like "(a) option text", "(a)", "a", "A", "a)", etc.
+ * Returns the uppercase letter, or the original string if no letter pattern found.
+ */
+export function normalizeCorrectAnswer(correctAnswer: string): string {
+  if (!correctAnswer) return '';
+  const trimmed = correctAnswer.trim();
+
+  // Already a single letter: "A", "a", "B", etc.
+  if (/^[A-Da-d]$/.test(trimmed)) {
+    return trimmed.toUpperCase();
+  }
+
+  // Pattern: "(a) ...", "(a)...", "(A) ..."
+  const parenMatch = trimmed.match(/^\(([A-Da-d])\)/);
+  if (parenMatch) {
+    return parenMatch[1].toUpperCase();
+  }
+
+  // Pattern: "a) ...", "A) ..."
+  const bracketMatch = trimmed.match(/^([A-Da-d])\)/);
+  if (bracketMatch) {
+    return bracketMatch[1].toUpperCase();
+  }
+
+  // Pattern: "a. ...", "A. ..."
+  const dotMatch = trimmed.match(/^([A-Da-d])\./);
+  if (dotMatch) {
+    return dotMatch[1].toUpperCase();
+  }
+
+  // For True/False questions, return as-is
+  return trimmed;
+}
+
+/**
+ * Check if a question requires a diagram/figure that we can't render.
+ * These questions reference images that weren't captured during PDF parsing.
+ */
+const DIAGRAM_PATTERNS = [
+  /\[diagram[:\s]/i,
+  /\[figure[:\s]/i,
+  /\[image[:\s]/i,
+  /\[circuit[:\s]/i,
+  /\[graph[:\s]/i,
+  /shown\s+in\s+the\s+(figure|diagram|graph|circuit)/i,
+  /refer\s+to\s+the\s+(figure|diagram)/i,
+  /given\s+(figure|diagram|circuit)/i,
+  /as\s+shown\s+(in\s+the\s+)?(figure|diagram|below)/i,
+  /the\s+following\s+(figure|diagram|circuit|graph)/i,
+];
+
+export function requiresDiagram(question: string): boolean {
+  return DIAGRAM_PATTERNS.some((pattern) => pattern.test(question));
+}
+
 /**
  * Fisher-Yates shuffle — returns a new shuffled array
  */

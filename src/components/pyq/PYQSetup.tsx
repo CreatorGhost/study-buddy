@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Sparkles, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Sparkles, TrendingDown, FileText, Clock } from 'lucide-react';
 import SubjectSelector from '@/components/SubjectSelector';
 import { getMarksForSubject } from '@/lib/pyq-utils';
 import { getTopWeakTopics } from '@/lib/storage';
@@ -29,6 +29,8 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
   const [allMarks, setAllMarks] = useState(true);
   const [questionCount, setQuestionCount] = useState(10);
   const [mode, setMode] = useState<PYQPracticeMode>('pyq');
+  const [timerEnabled, setTimerEnabled] = useState(true);
+  const [paperYear, setPaperYear] = useState<number | null>(null);
   const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
 
   // Index data from API
@@ -64,6 +66,7 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
     setAllYears(true);
     setSelectedMarks([]);
     setAllMarks(true);
+    setPaperYear(null);
   }, [subject]);
 
   const subjectData = indexData.find((s) => s.name === subject);
@@ -141,6 +144,21 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
   };
 
   const handleStart = () => {
+    if (mode === 'full-paper') {
+      if (!paperYear) return;
+      onStart({
+        subject,
+        years: [paperYear],
+        marks: availableMarks,
+        questionCount: 999, // full paper — all questions
+        mode,
+        paperYear,
+        timerEnabled,
+        durationMinutes: timerEnabled ? 180 : undefined,
+      });
+      return;
+    }
+
     const years = allYears ? availableYears : selectedYears;
     const marks = allMarks ? availableMarks : selectedMarks;
 
@@ -158,8 +176,9 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
   const canStart =
     !loading &&
     !indexLoading &&
-    (allYears || selectedYears.length > 0) &&
-    (allMarks || selectedMarks.length > 0);
+    (mode === 'full-paper'
+      ? !!paperYear
+      : (allYears || selectedYears.length > 0) && (allMarks || selectedMarks.length > 0));
 
   return (
     <div className="bg-bg-surface border border-border rounded-lg p-5 animate-fade-in-up space-y-5">
@@ -177,98 +196,104 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
         </div>
       ) : (
         <>
-          {/* Years */}
-          <div>
-            <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
-              Years
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={toggleAllYears}
-                className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                  ${allYears
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
-                  }`}
-              >
-                All Years
-              </button>
-              {availableYears.map((year) => (
+          {/* Years — hidden in full-paper mode (uses single year picker instead) */}
+          {mode !== 'full-paper' && (
+            <div>
+              <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
+                Years
+              </label>
+              <div className="flex flex-wrap gap-1.5">
                 <button
-                  key={year}
-                  onClick={() => toggleYear(year)}
+                  onClick={toggleAllYears}
                   className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                    ${allYears || selectedYears.includes(year)
+                    ${allYears
                       ? 'bg-accent text-white'
                       : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
                     }`}
                 >
-                  {year}
+                  All Years
                 </button>
-              ))}
+                {availableYears.map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => toggleYear(year)}
+                    className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                      ${allYears || selectedYears.includes(year)
+                        ? 'bg-accent text-white'
+                        : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                      }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Marks */}
-          <div>
-            <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
-              Marks
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={toggleAllMarks}
-                className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                  ${allMarks
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
-                  }`}
-              >
-                All
-              </button>
-              {availableMarks.map((mark) => (
+          {/* Marks — hidden in full-paper mode */}
+          {mode !== 'full-paper' && (
+            <div>
+              <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
+                Marks
+              </label>
+              <div className="flex flex-wrap gap-1.5">
                 <button
-                  key={mark}
-                  onClick={() => toggleMark(mark)}
+                  onClick={toggleAllMarks}
                   className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                    ${allMarks || selectedMarks.includes(mark)
+                    ${allMarks
                       ? 'bg-accent text-white'
                       : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
                     }`}
                 >
-                  {mark} mark{mark !== 1 ? 's' : ''}
+                  All
                 </button>
-              ))}
+                {availableMarks.map((mark) => (
+                  <button
+                    key={mark}
+                    onClick={() => toggleMark(mark)}
+                    className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                      ${allMarks || selectedMarks.includes(mark)
+                        ? 'bg-accent text-white'
+                        : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                      }`}
+                  >
+                    {mark} mark{mark !== 1 ? 's' : ''}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Question Count */}
-          <div>
-            <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
-              Questions
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {QUESTION_COUNT_OPTIONS.map((count) => (
-                <button
-                  key={count}
-                  onClick={() => setQuestionCount(count)}
-                  className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
-                    ${questionCount === count
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
-                    }`}
-                >
-                  {count}
-                </button>
-              ))}
+          {/* Question Count — hidden in full-paper mode */}
+          {mode !== 'full-paper' && (
+            <div>
+              <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
+                Questions
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {QUESTION_COUNT_OPTIONS.map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => setQuestionCount(count)}
+                    className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                      ${questionCount === count
+                        ? 'bg-accent text-white'
+                        : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                      }`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Mode Toggle */}
           <div>
             <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
               Mode
             </label>
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setMode('pyq')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
@@ -290,6 +315,17 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
                 <Sparkles size={12} />
                 AI Similar
               </button>
+              <button
+                onClick={() => setMode('full-paper')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                  ${mode === 'full-paper'
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                  }`}
+              >
+                <FileText size={12} />
+                Full Paper
+              </button>
             </div>
             {mode === 'ai-similar' && (
               <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-md bg-warning-subtle border border-warning/20">
@@ -300,6 +336,42 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
               </div>
             )}
           </div>
+
+          {/* Full Paper: single year picker + timer toggle */}
+          {mode === 'full-paper' && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-medium text-text-faint uppercase tracking-wider mb-2 block">
+                  Select Paper Year
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {availableYears.map((year) => (
+                    <button
+                      key={year}
+                      onClick={() => setPaperYear(paperYear === year ? null : year)}
+                      className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors duration-100
+                        ${paperYear === year
+                          ? 'bg-accent text-white'
+                          : 'bg-bg-elevated text-text-muted border border-border hover:border-border-hover hover:text-text-secondary'
+                        }`}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={timerEnabled}
+                  onChange={(e) => setTimerEnabled(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-border accent-accent"
+                />
+                <Clock size={13} className="text-text-muted" />
+                <span className="text-[12px] text-text-secondary">3 Hour Timer</span>
+              </label>
+            </div>
+          )}
 
           {/* Weak Topics Card */}
           {weakTopics.length > 0 && (
@@ -334,7 +406,9 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
           {/* Start Button */}
           {!canStart && !indexLoading && !loading && (
             <p className="text-[11px] text-text-faint text-center">
-              Select at least one year and one marks category to start
+              {mode === 'full-paper'
+                ? 'Select a paper year to start'
+                : 'Select at least one year and one marks category to start'}
             </p>
           )}
           <button
@@ -342,7 +416,11 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
             disabled={!canStart}
             className="btn-primary w-full justify-center"
           >
-            {loading ? 'Loading questions...' : 'Start Practice'}
+            {loading
+              ? 'Loading questions...'
+              : mode === 'full-paper'
+              ? 'Start Full Paper'
+              : 'Start Practice'}
           </button>
         </>
       )}

@@ -1,5 +1,14 @@
 'use client';
 
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+
+const REMARK_PLUGINS = [remarkMath, remarkGfm];
+const REHYPE_PLUGINS = [rehypeKatex];
+
 interface PYQOptionListProps {
   options: string[];
   selectedOption?: string;
@@ -59,7 +68,11 @@ export default function PYQOptionList({
               >
                 {option[0]}
               </span>
-              <span className="text-[13px] text-text-secondary">{option}</span>
+              <span className="text-[13px] text-text-secondary prose-study [&>p]:m-0 [&>p]:inline">
+                <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={REHYPE_PLUGINS}>
+                  {option}
+                </ReactMarkdown>
+              </span>
             </button>
           );
         })}
@@ -107,7 +120,11 @@ export default function PYQOptionList({
             >
               {letter}
             </span>
-            <span className="text-[13px] text-text-secondary leading-relaxed">{option}</span>
+            <span className="text-[13px] text-text-secondary leading-relaxed prose-study [&>p]:m-0 [&>p]:inline">
+              <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={REHYPE_PLUGINS}>
+                {option}
+              </ReactMarkdown>
+            </span>
           </button>
         );
       })}
