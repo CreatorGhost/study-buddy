@@ -158,6 +158,7 @@ export interface PYQAnswer {
   textAnswer?: string;
   selectedOption?: string;
   codeAnswer?: string;
+  codeLanguage?: 'python' | 'cpp' | 'sql';
   imageBase64?: string;
   isAnswered: boolean;
   isFlagged: boolean;

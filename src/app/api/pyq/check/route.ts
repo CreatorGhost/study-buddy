@@ -5,6 +5,7 @@ import {
   buildCodeCheckPrompt,
   buildImageCheckPrompt,
 } from '@/lib/pyq-prompts';
+import { parseJsonResponse } from '@/lib/pyq-utils';
 import { Subject } from '@/types';
 
 export const runtime = 'nodejs';
@@ -29,6 +30,10 @@ interface CheckResult {
   feedback: string;
   keyPointsMissed: string[];
   isCorrect: boolean;
+}
+
+function makeFallback(questionId: string, maxMarks: number, feedback: string): CheckResult {
+  return { questionId, score: 0, maxMarks, feedback, keyPointsMissed: [], isCorrect: false };
 }
 
 /**
@@ -58,7 +63,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Split questions into categories
     const imageQuestions = questions.filter((q) => q.imageBase64);
     const codeQuestions = questions.filter(
       (q) => !q.imageBase64 && q.type === 'coding'
@@ -68,8 +72,6 @@ export async function POST(req: NextRequest) {
     );
 
     const allResults: CheckResult[] = [];
-
-    // Process all categories in parallel
     const promises: Promise<void>[] = [];
 
     // 1. Text-based questions (batch)
@@ -89,21 +91,20 @@ export async function POST(req: NextRequest) {
                 ? response.content[0].text
                 : '';
             const parsed = parseJsonResponse(text);
-            if (parsed?.results) {
+            if (Array.isArray(parsed?.results)) {
               allResults.push(...parsed.results);
+            } else if (parsed?.results != null) {
+              allResults.push(parsed.results as CheckResult);
+            } else {
+              console.error('Text check parse failed');
+              for (const q of textQuestions) {
+                allResults.push(makeFallback(q.id, q.marks, 'Could not parse evaluation response. Please try again.'));
+              }
             }
           } catch (err) {
             console.error('Text check failed:', err);
-            // Return fallback results for text questions
             for (const q of textQuestions) {
-              allResults.push({
-                questionId: q.id,
-                score: 0,
-                maxMarks: q.marks,
-                feedback: 'Evaluation failed. Please try again.',
-                keyPointsMissed: [],
-                isCorrect: false,
-              });
+              allResults.push(makeFallback(q.id, q.marks, 'Evaluation failed. Please try again.'));
             }
           }
         })()
@@ -138,20 +139,20 @@ export async function POST(req: NextRequest) {
                 ? response.content[0].text
                 : '';
             const parsed = parseJsonResponse(text);
-            if (parsed?.results) {
+            if (Array.isArray(parsed?.results)) {
               allResults.push(...parsed.results);
+            } else if (parsed?.results != null) {
+              allResults.push(parsed.results as CheckResult);
+            } else {
+              console.error('Code check parse failed');
+              for (const q of codeQuestions) {
+                allResults.push(makeFallback(q.id, q.marks, 'Could not parse evaluation response. Please try again.'));
+              }
             }
           } catch (err) {
             console.error('Code check failed:', err);
             for (const q of codeQuestions) {
-              allResults.push({
-                questionId: q.id,
-                score: 0,
-                maxMarks: q.marks,
-                feedback: 'Code evaluation failed. Please try again.',
-                keyPointsMissed: [],
-                isCorrect: false,
-              });
+              allResults.push(makeFallback(q.id, q.marks, 'Code evaluation failed. Please try again.'));
             }
           }
         })()
@@ -171,7 +172,6 @@ export async function POST(req: NextRequest) {
               q.marks
             );
 
-            // Extract media type and strip data URL prefix
             const dataUrl = q.imageBase64!;
             const mediaTypeMatch = dataUrl.match(/^data:(image\/\w+);base64,/);
             const mediaType = (mediaTypeMatch?.[1] || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
@@ -195,10 +195,7 @@ export async function POST(req: NextRequest) {
                         data: base64Data,
                       },
                     },
-                    {
-                      type: 'text',
-                      text: prompt,
-                    },
+                    { type: 'text', text: prompt },
                   ],
                 },
               ],
@@ -212,24 +209,19 @@ export async function POST(req: NextRequest) {
             if (parsed) {
               allResults.push({
                 questionId: q.id,
-                score: parsed.score ?? 0,
-                maxMarks: parsed.maxMarks ?? q.marks,
-                feedback: parsed.feedback ?? 'No feedback available.',
-                keyPointsMissed: parsed.keyPointsMissed ?? [],
-                isCorrect: parsed.isCorrect ?? false,
+                score: (parsed.score as number) ?? 0,
+                maxMarks: (parsed.maxMarks as number) ?? q.marks,
+                feedback: (parsed.feedback as string) ?? 'No feedback available.',
+                keyPointsMissed: (parsed.keyPointsMissed as string[]) ?? [],
+                isCorrect: (parsed.isCorrect as boolean) ?? false,
               });
+            } else {
+              console.error(`Image check parse failed for question ${q.id}`);
+              allResults.push(makeFallback(q.id, q.marks, 'Could not parse evaluation response. Please try again.'));
             }
           } catch (err) {
             console.error(`Image check failed for question ${q.id}:`, err);
-            allResults.push({
-              questionId: q.id,
-              score: 0,
-              maxMarks: q.marks,
-              feedback:
-                'Image evaluation failed. Please try again or type your answer instead.',
-              keyPointsMissed: [],
-              isCorrect: false,
-            });
+            allResults.push(makeFallback(q.id, q.marks, 'Image evaluation failed. Please try again or type your answer instead.'));
           }
         })()
       );
@@ -241,27 +233,5 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Check failed';
     return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-/**
- * Parse a JSON response from Claude, handling markdown code fences.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseJsonResponse(text: string): any {
-  try {
-    // Try direct parse first
-    return JSON.parse(text);
-  } catch {
-    // Try extracting from markdown code fence
-    const match = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-    if (match) {
-      try {
-        return JSON.parse(match[1]);
-      } catch {
-        return null;
-      }
-    }
-    return null;
   }
 }

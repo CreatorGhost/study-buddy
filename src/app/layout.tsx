@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en" className={`dark ${inter.variable}`}>
       <body className={`${inter.className} antialiased bg-bg-base text-text-primary min-h-screen`}>
         <div className="page-glow" />
-        <div className="flex min-h-screen relative z-10">
+        <div className="flex h-screen overflow-hidden relative z-10">
           {children}
         </div>
       </body>

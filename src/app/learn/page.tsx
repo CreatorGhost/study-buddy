@@ -249,7 +249,7 @@ export default function LearnPage() {
       <Sidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 h-12 border-b border-border shrink-0">
+        <header className="flex items-center justify-between pl-14 md:pl-4 pr-4 h-12 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <h1 className="text-[13px] font-semibold text-text-primary">Learn</h1>
             {activeAgent && (
@@ -261,26 +261,34 @@ export default function LearnPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className={`p-1.5 rounded-md transition-colors duration-100
+              className={`p-2 rounded-md transition-colors duration-100
                 ${showHistory ? 'bg-bg-hover text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated'}`}
               title="Chat history"
+              aria-label="Toggle chat history"
             >
-              <MessageSquare size={15} strokeWidth={1.75} />
+              <MessageSquare size={16} strokeWidth={1.75} />
             </button>
             <button
               onClick={startNewChat}
-              className="p-1.5 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors duration-100"
+              className="p-2 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors duration-100"
               title="New chat"
+              aria-label="New chat"
             >
-              <Plus size={15} strokeWidth={1.75} />
+              <Plus size={16} strokeWidth={1.75} />
             </button>
           </div>
         </header>
 
         <div className="flex-1 flex overflow-hidden">
           {/* Chat history panel */}
-          {showHistory && (
-            <div className="w-56 border-r border-border bg-bg-surface overflow-y-auto shrink-0 animate-fade-in">
+          <div
+            className={`
+              border-r border-border bg-bg-surface overflow-y-auto shrink-0
+              transition-all duration-250 ease-[cubic-bezier(0.32,0.72,0,1)]
+              ${showHistory ? 'w-56 opacity-100' : 'w-0 opacity-0 overflow-hidden border-r-0'}
+            `}
+          >
+            <div className="w-56">
               <div className="px-3 py-2.5 border-b border-border">
                 <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">History</p>
               </div>
@@ -313,7 +321,7 @@ export default function LearnPage() {
                 </div>
               )}
             </div>
-          )}
+          </div>
 
           {/* Main chat area */}
           <div className="flex-1 flex flex-col overflow-hidden">

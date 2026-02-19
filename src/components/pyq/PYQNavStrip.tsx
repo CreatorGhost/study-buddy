@@ -3,7 +3,6 @@
 import type { PYQAnswer } from '@/types';
 
 interface PYQNavStripProps {
-  total: number;
   currentIndex: number;
   answers: Record<string, PYQAnswer>;
   questionIds: string[];
@@ -11,14 +10,14 @@ interface PYQNavStripProps {
 }
 
 export default function PYQNavStrip({
-  total,
   currentIndex,
   answers,
   questionIds,
   onNavigate,
 }: PYQNavStripProps) {
-  const useSmall = total > 15;
-  const dotSize = useSmall ? 'w-5 h-5 text-[10px]' : 'w-6 h-6 text-[11px]';
+  const count = questionIds.length;
+  const isSmall = count > 15;
+  const dotSize = isSmall ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-[11px]';
 
   const getStatus = (index: number): 'current' | 'flagged' | 'answered' | 'unanswered' => {
     if (index === currentIndex) return 'current';
@@ -36,9 +35,9 @@ export default function PYQNavStrip({
   };
 
   return (
-    <div className="overflow-x-auto scrollbar-thin">
-      <div className={`flex flex-wrap gap-1.5 ${useSmall ? 'max-w-full' : ''}`}>
-        {Array.from({ length: total }, (_, i) => {
+    <div className="overflow-x-auto">
+      <div className={`flex flex-wrap gap-1.5 ${isSmall ? 'max-w-full' : ''}`}>
+        {Array.from({ length: count }, (_, i) => {
           const status = getStatus(i);
           return (
             <button

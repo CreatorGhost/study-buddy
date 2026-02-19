@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import client, { MODEL_SMART } from '@/lib/anthropic';
 import { buildGeneratePrompt } from '@/lib/pyq-prompts';
+import { parseJsonResponse } from '@/lib/pyq-utils';
 import { Subject, PYQQuestion } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const VALID_PYQ_TYPES: PYQQuestion['type'][] = [
+  'mcq', 'assertion-reasoning', 'short-answer', 'long-answer',
+  'case-based', 'fill-blank', 'true-false', 'coding',
+];
+
+function toValidType(raw: unknown): PYQQuestion['type'] {
+  if (typeof raw === 'string' && VALID_PYQ_TYPES.includes(raw as PYQQuestion['type'])) {
+    return raw as PYQQuestion['type'];
+  }
+  return 'short-answer';
+}
 
 interface GenerateRequest {
   subject: Subject;
@@ -70,13 +83,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Assign generated IDs and normalize the shape
     const questions: PYQQuestion[] = parsed.questions.map(
       (q: Record<string, unknown>, index: number) => ({
         id: `ai_${Date.now()}_${index}`,
         questionNumber: (q.questionNumber as number) || index + 1,
         section: (q.section as string) || 'AI Generated',
-        type: ((q.type as string) || 'short-answer') as PYQQuestion['type'],
+        type: toValidType(q.type),
         question: (q.question as string) || '',
         options: (q.options as string[] | null) || undefined,
         correctAnswer: (q.correctAnswer as string) || '',
@@ -90,24 +102,5 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Generation failed';
     return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-/**
- * Parse a JSON response from Claude, handling markdown code fences.
- */
-function parseJsonResponse(text: string): Record<string, unknown> | null {
-  try {
-    return JSON.parse(text);
-  } catch {
-    const match = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-    if (match) {
-      try {
-        return JSON.parse(match[1]);
-      } catch {
-        return null;
-      }
-    }
-    return null;
   }
 }

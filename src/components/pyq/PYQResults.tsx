@@ -2,6 +2,13 @@
 
 import { RotateCcw, ArrowRight, TrendingDown } from 'lucide-react';
 
+function getGrade(percentage: number): { label: string; color: string } {
+  if (percentage >= 90) return { label: 'Excellent', color: 'text-success' };
+  if (percentage >= 70) return { label: 'Good', color: 'text-accent-light' };
+  if (percentage >= 50) return { label: 'Keep practicing', color: 'text-warning' };
+  return { label: 'Needs work', color: 'text-error' };
+}
+
 interface PYQResultsProps {
   totalScore: number;
   maxScore: number;
@@ -23,15 +30,8 @@ export default function PYQResults({
 }: PYQResultsProps) {
   const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
   const strokeDasharray = `${percentage * 2.64} 264`;
-
-  const getGrade = () => {
-    if (percentage >= 90) return { label: 'Excellent', color: 'text-success' };
-    if (percentage >= 70) return { label: 'Good', color: 'text-accent-light' };
-    if (percentage >= 50) return { label: 'Keep practicing', color: 'text-warning' };
-    return { label: 'Needs work', color: 'text-error' };
-  };
-
-  const grade = getGrade();
+  const grade = getGrade(percentage);
+  const hasWrong = totalScore < maxScore;
 
   const topics = Object.entries(topicBreakdown).sort(
     (a, b) => {
@@ -138,7 +138,11 @@ export default function PYQResults({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-        <button onClick={onRetryWrong} className="btn-ghost">
+        <button
+          onClick={hasWrong ? onRetryWrong : undefined}
+          disabled={!hasWrong}
+          className="btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           <RotateCcw size={13} />
           Retry Wrong
         </button>

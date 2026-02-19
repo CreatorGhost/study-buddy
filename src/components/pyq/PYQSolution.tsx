@@ -15,7 +15,7 @@ interface PYQSolutionProps {
 
 export default function PYQSolution({ correctAnswer, solution, marks }: PYQSolutionProps) {
   return (
-    <div className="bg-bg-surface border border-border rounded-lg p-4 space-y-3 animate-fade-in-up">
+    <div className="bg-bg-elevated border border-border rounded-lg p-4 space-y-3 animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">

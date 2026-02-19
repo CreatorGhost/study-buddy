@@ -29,8 +29,10 @@ export async function GET(req: NextRequest) {
   const year = searchParams.get('year');
   const topic = searchParams.get('topic');
   const type = searchParams.get('type');
-  const limit = parseInt(searchParams.get('limit') || '100');
-  const offset = parseInt(searchParams.get('offset') || '0');
+  const rawLimit = parseInt(searchParams.get('limit') || '100', 10);
+  const rawOffset = parseInt(searchParams.get('offset') || '0', 10);
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 100;
+  const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
 
   // No subject = return index/overview
   if (!subject) {
@@ -43,8 +45,14 @@ export async function GET(req: NextRequest) {
     .select('*', { count: 'exact' })
     .eq('subject', subject);
 
-  if (marks) query = query.eq('marks', parseInt(marks));
-  if (year) query = query.eq('year', parseInt(year));
+  if (marks) {
+    const m = parseInt(marks, 10);
+    if (Number.isFinite(m)) query = query.eq('marks', m);
+  }
+  if (year) {
+    const y = parseInt(year, 10);
+    if (Number.isFinite(y)) query = query.eq('year', y);
+  }
   if (topic) query = query.ilike('topic', `%${topic}%`);
   if (type) query = query.eq('type', type);
 
@@ -155,7 +163,16 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = getSupabase();
-  const body = await req.json();
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid JSON body' },
+      { status: 400 }
+    );
+  }
 
   const {
     subject,
@@ -168,7 +185,12 @@ export async function POST(req: NextRequest) {
     answers,
   } = body;
 
-  if (!subject || !marksCategory || questionsAttempted === undefined) {
+  if (
+    !subject ||
+    marksCategory == null ||
+    questionsAttempted == null ||
+    !Number.isFinite(Number(questionsAttempted))
+  ) {
     return NextResponse.json(
       { error: 'Missing required fields: subject, marksCategory, questionsAttempted' },
       { status: 400 }

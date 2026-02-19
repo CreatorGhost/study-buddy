@@ -78,7 +78,13 @@ export default function PYQQuestionCard({
           />
         );
 
-      case 'fill-blank':
+      case 'fill-blank': {
+        let fillStyle = '';
+        if (showResult && autoResult) {
+          fillStyle = autoResult.isCorrect
+            ? 'border-success bg-success/5'
+            : 'border-error bg-error/5';
+        }
         return (
           <input
             type="text"
@@ -91,9 +97,12 @@ export default function PYQQuestionCard({
             }
             disabled={showResult}
             placeholder="Type your answer..."
-            className="input-base disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`input-base disabled:cursor-not-allowed ${
+              showResult ? fillStyle : ''
+            } ${showResult ? 'disabled:opacity-100' : 'disabled:opacity-50'}`}
           />
         );
+      }
 
       case 'short-answer':
         return (
@@ -132,7 +141,7 @@ export default function PYQQuestionCard({
         );
 
       case 'coding': {
-        const lang = detectLanguage(question.question);
+        const lang = answer.codeLanguage || detectLanguage(question.question);
         return (
           <PYQCodeEditor
             value={answer.codeAnswer || ''}
@@ -143,6 +152,9 @@ export default function PYQQuestionCard({
               })
             }
             language={lang}
+            onLanguageChange={(newLang) =>
+              onAnswer({ codeLanguage: newLang })
+            }
             disabled={showResult}
           />
         );

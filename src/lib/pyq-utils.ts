@@ -33,26 +33,23 @@ export function isFillBlank(type: string): boolean {
 export function fuzzyMatch(studentAnswer: string, correctAnswer: string): boolean {
   const normalize = (s: string) =>
     s.toLowerCase().trim()
-      .replace(/[^\w\s]/g, '')
+      .replace(/[^\w\s.\-+]/g, '')
       .replace(/\s+/g, ' ');
 
   const student = normalize(studentAnswer);
   const correct = normalize(correctAnswer);
 
-  // Empty answers never match
   if (!student || !correct) return false;
 
   if (student === correct) return true;
 
-  // Check numeric equivalence
-  const studentNum = parseFloat(student);
-  const correctNum = parseFloat(correct);
-  if (!isNaN(studentNum) && !isNaN(correctNum) && studentNum === correctNum) return true;
+  const NUMERIC_RE = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+  if (NUMERIC_RE.test(student) && NUMERIC_RE.test(correct)) {
+    if (Number(student) === Number(correct)) return true;
+  }
 
-  // For short answers (< 5 chars), require exact match only
   if (correct.length < 5) return false;
 
-  // For longer answers, check containment (student wrote the correct answer within their response)
   if (student.includes(correct)) return true;
 
   return false;
@@ -170,7 +167,8 @@ export function getMarksForSubject(subject: Subject): number[] {
  */
 export function detectLanguage(question: string): 'python' | 'cpp' | 'sql' {
   const lower = question.toLowerCase();
-  if (lower.includes('sql') || lower.includes('select') || lower.includes('table')) return 'sql';
+  const sqlPatterns = /\bsql\b|create\s+table|insert\s+into|select\s+.+?\bfrom\b|drop\s+table|alter\s+table|\bjoin\b|\bunion\b|\bwhere\b/;
+  if (sqlPatterns.test(lower)) return 'sql';
   if (lower.includes('c++') || lower.includes('#include') || lower.includes('cout')) return 'cpp';
   return 'python';
 }
@@ -188,12 +186,31 @@ export function calculateTotalScore(
 
   for (const q of questions) {
     maxScore += q.marks;
-    if (autoResults[q.id]?.isCorrect) {
-      totalScore += q.marks;
+    if (autoResults[q.id] !== undefined) {
+      if (autoResults[q.id].isCorrect) totalScore += q.marks;
     } else if (aiFeedback[q.id]) {
       totalScore += aiFeedback[q.id].score;
     }
   }
 
   return { totalScore, maxScore };
+}
+
+/**
+ * Parse a JSON response from an LLM, handling markdown code fences.
+ */
+export function parseJsonResponse(text: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
 }

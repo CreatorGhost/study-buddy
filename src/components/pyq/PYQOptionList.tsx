@@ -48,7 +48,11 @@ export default function PYQOptionList({
             >
               <span
                 className={`shrink-0 w-5 h-5 rounded text-[11px] font-medium flex items-center justify-center
-                  ${isSelected || (showResult && isCorrectOption)
+                  ${showResult && isCorrectOption
+                    ? 'bg-success text-white'
+                    : showResult && isSelected && !isCorrectOption
+                    ? 'bg-error text-white'
+                    : isSelected
                     ? 'bg-accent text-white'
                     : 'bg-bg-elevated text-text-faint'
                   }`}
@@ -92,7 +96,11 @@ export default function PYQOptionList({
           >
             <span
               className={`shrink-0 w-5 h-5 rounded text-[11px] font-medium flex items-center justify-center mt-0.5
-                ${isSelected || (showResult && isCorrectOption)
+                ${showResult && isCorrectOption
+                  ? 'bg-success text-white'
+                  : showResult && isSelected && !isCorrectOption
+                  ? 'bg-error text-white'
+                  : isSelected
                   ? 'bg-accent text-white'
                   : 'bg-bg-elevated text-text-faint'
                 }`}
