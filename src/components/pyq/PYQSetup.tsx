@@ -28,7 +28,7 @@ export default function PYQSetup({ onStart, loading = false }: PYQSetupProps) {
   const [selectedMarks, setSelectedMarks] = useState<number[]>([]);
   const [allMarks, setAllMarks] = useState(true);
   const [questionCount, setQuestionCount] = useState(10);
-  const [mode, setMode] = useState<PYQPracticeMode>('pyq');
+  const [mode, setMode] = useState<PYQPracticeMode>('full-paper');
   const [aiGenerated, setAiGenerated] = useState(false);
   const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
 

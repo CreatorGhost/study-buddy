@@ -52,6 +52,9 @@ export default function PYQPage() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [setupLoading, setSetupLoading] = useState(false);
+  const [generatingSections, setGeneratingSections] = useState<Set<string>>(new Set());
+  const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
+  const abortControllerRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch questions and start session
@@ -66,26 +69,102 @@ export default function PYQPage() {
         let durationMinutes = 180;
 
         if (sessionConfig.aiGenerated) {
-          // AI path — generate 50% reworded + 50% fresh
+          // AI path — generate sections in parallel
           if (!confirm('This will use AI to generate a full sample paper. This costs API credits. Continue?')) {
             setSetupLoading(false);
             return;
           }
 
-          const res = await fetch('/api/pyq/generate-paper', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subject: sessionConfig.subject }),
-          });
+          const structure = CBSE_PAPER_STRUCTURE[sessionConfig.subject];
+          if (!structure) {
+            throw new Error('Unknown subject structure');
+          }
+          durationMinutes = structure.durationMinutes;
 
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({ error: 'Generation failed' }));
-            throw new Error(err.error || 'Failed to generate paper');
+          // Transition to taking phase immediately with skeleton UI
+          const sectionLetters = structure.sections.map((s) => s.section);
+          setGeneratingSections(new Set(sectionLetters));
+          setSectionErrors({});
+          setConfig({ ...sessionConfig, timerEnabled: true, durationMinutes });
+          setQuestions([]);
+          setAnswers({});
+          setAutoResults({});
+          setAiFeedback({});
+          setCurrentIndex(0);
+          setPhase('taking');
+          setSetupLoading(false);
+
+          // Fire all section calls in parallel
+          const controller = new AbortController();
+          abortControllerRef.current = controller;
+
+          let startQ = 1;
+          for (const secDef of structure.sections) {
+            const startQuestionNumber = startQ;
+            startQ += secDef.count;
+
+            fetch('/api/pyq/generate-section', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                subject: sessionConfig.subject,
+                section: secDef.section,
+                count: secDef.count,
+                marksPerQuestion: secDef.marksPerQuestion,
+                startQuestionNumber,
+              }),
+              signal: controller.signal,
+            })
+              .then(async (res) => {
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({ error: 'Generation failed' }));
+                  throw new Error(err.error || `Failed to generate Section ${secDef.section}`);
+                }
+                return res.json();
+              })
+              .then((data) => {
+                const sectionQuestions = (data.questions || []) as PYQQuestion[];
+
+                // Merge questions and answers into state
+                setQuestions((prev) => {
+                  const combined = [...prev, ...sectionQuestions];
+                  combined.sort((a, b) => a.questionNumber - b.questionNumber);
+                  return combined;
+                });
+                setAnswers((prev) => {
+                  const next = { ...prev };
+                  for (const q of sectionQuestions) {
+                    next[q.id] = {
+                      questionId: q.id,
+                      type: q.type,
+                      isAnswered: false,
+                      isFlagged: false,
+                    };
+                  }
+                  return next;
+                });
+
+                setGeneratingSections((prev) => {
+                  const next = new Set(prev);
+                  next.delete(secDef.section);
+                  return next;
+                });
+              })
+              .catch((err) => {
+                if (err.name === 'AbortError') return;
+                setSectionErrors((prev) => ({
+                  ...prev,
+                  [secDef.section]: err.message || `Section ${secDef.section} failed`,
+                }));
+                setGeneratingSections((prev) => {
+                  const next = new Set(prev);
+                  next.delete(secDef.section);
+                  return next;
+                });
+              });
           }
 
-          const data = await res.json();
-          paperQuestions = (data.questions || []) as PYQQuestion[];
-          durationMinutes = data.structure?.durationMinutes || 180;
+          return; // All state is already set above
         } else {
           // PYQ path — assemble from existing question bank
           const params = new URLSearchParams({
@@ -269,6 +348,89 @@ export default function PYQPage() {
       setSetupLoading(false);
     }
   }, []);
+
+  // Retry a failed section generation
+  const retrySection = useCallback((sectionLetter: string) => {
+    if (!config?.subject) return;
+
+    const structure = CBSE_PAPER_STRUCTURE[config.subject];
+    if (!structure) return;
+
+    const secDef = structure.sections.find((s) => s.section === sectionLetter);
+    if (!secDef) return;
+
+    // Compute startQuestionNumber for this section
+    let startQ = 1;
+    for (const s of structure.sections) {
+      if (s.section === sectionLetter) break;
+      startQ += s.count;
+    }
+
+    // Clear error, mark as generating
+    setSectionErrors((prev) => {
+      const next = { ...prev };
+      delete next[sectionLetter];
+      return next;
+    });
+    setGeneratingSections((prev) => new Set(prev).add(sectionLetter));
+
+    fetch('/api/pyq/generate-section', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject: config.subject,
+        section: sectionLetter,
+        count: secDef.count,
+        marksPerQuestion: secDef.marksPerQuestion,
+        startQuestionNumber: startQ,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Generation failed' }));
+          throw new Error(err.error || `Failed to generate Section ${sectionLetter}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        const sectionQuestions = (data.questions || []) as PYQQuestion[];
+
+        setQuestions((prev) => {
+          const combined = [...prev, ...sectionQuestions];
+          combined.sort((a, b) => a.questionNumber - b.questionNumber);
+          return combined;
+        });
+        setAnswers((prev) => {
+          const next = { ...prev };
+          for (const q of sectionQuestions) {
+            next[q.id] = {
+              questionId: q.id,
+              type: q.type,
+              isAnswered: false,
+              isFlagged: false,
+            };
+          }
+          return next;
+        });
+
+        setGeneratingSections((prev) => {
+          const next = new Set(prev);
+          next.delete(sectionLetter);
+          return next;
+        });
+      })
+      .catch((err) => {
+        setSectionErrors((prev) => ({
+          ...prev,
+          [sectionLetter]: err.message || `Section ${sectionLetter} failed`,
+        }));
+        setGeneratingSections((prev) => {
+          const next = new Set(prev);
+          next.delete(sectionLetter);
+          return next;
+        });
+      });
+  }, [config]);
 
   // Update a single answer
   const handleAnswer = useCallback(
@@ -490,6 +652,13 @@ export default function PYQPage() {
     }
   }, [phase]);
 
+  // Cancel pending section generation on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   // Keyboard navigation in taking phase (not for full-paper mode — it scrolls)
   useEffect(() => {
     if (phase !== 'taking' || config?.mode === 'full-paper') return;
@@ -607,6 +776,9 @@ export default function PYQPage() {
                 onAnswer={handleAnswer}
                 onSubmit={handleSubmit}
                 subject={config?.subject}
+                loadingSections={generatingSections}
+                sectionErrors={sectionErrors}
+                onRetrySection={retrySection}
               />
             </div>
           )}

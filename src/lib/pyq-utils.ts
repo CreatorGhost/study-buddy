@@ -96,9 +96,15 @@ export interface AssembledPaper {
   warnings: string[];
 }
 
+/** Question types that belong in Section A (objective/MCQ) */
+const OBJECTIVE_TYPES: PYQQuestion['type'][] = ['mcq', 'assertion-reasoning', 'true-false', 'fill-blank'];
+
+/** Question types that belong in Sections B-E (subjective) */
+const SUBJECTIVE_TYPES: PYQQuestion['type'][] = ['short-answer', 'long-answer', 'case-based', 'coding'];
+
 /**
  * Assemble a sample paper from a pool of questions matching CBSE structure.
- * Filters by section + marks, removes diagram questions, shuffles, picks N.
+ * Filters by section + marks + question type, removes diagram questions, shuffles, picks N.
  * Renumbers questions sequentially.
  */
 export function assemblePaper(allQuestions: PYQQuestion[], subject: string): AssembledPaper {
@@ -112,14 +118,32 @@ export function assemblePaper(allQuestions: PYQQuestion[], subject: string): Ass
   const usedIds = new Set<string>();
 
   for (const secDef of structure.sections) {
-    // Filter pool: matching section + marks, not diagram-dependent, not already used
-    const pool = allQuestions.filter(
+    const isObjectiveSection = secDef.section === 'A';
+    const allowedTypes = isObjectiveSection ? OBJECTIVE_TYPES : SUBJECTIVE_TYPES;
+
+    // Primary pool: matching section + marks + type, not diagram-dependent, not already used
+    let pool = allQuestions.filter(
       (q) =>
         (q.section || '').toUpperCase() === secDef.section &&
         q.marks === secDef.marksPerQuestion &&
+        allowedTypes.includes(q.type) &&
         !requiresDiagram(q.question) &&
         !usedIds.has(q.id),
     );
+
+    // Fallback: if too few, broaden to any section with matching marks + type
+    if (pool.length < secDef.count) {
+      const broader = allQuestions.filter(
+        (q) =>
+          q.marks === secDef.marksPerQuestion &&
+          allowedTypes.includes(q.type) &&
+          !requiresDiagram(q.question) &&
+          !usedIds.has(q.id),
+      );
+      if (broader.length > pool.length) {
+        pool = broader;
+      }
+    }
 
     const picked = shuffle(pool).slice(0, secDef.count);
 

@@ -18,6 +18,33 @@ import PYQAIFeedback from './PYQAIFeedback';
 import { detectLanguage } from '@/lib/pyq-utils';
 import type { PYQQuestion, PYQAnswer, PYQAIFeedback as PYQAIFeedbackType } from '@/types';
 
+/**
+ * Strip embedded options from question text when they'll be rendered
+ * separately as clickable buttons. Assertion-reasoning questions from
+ * the DB often include "Select the correct answer: (a)...(b)..." inline.
+ */
+function stripEmbeddedOptions(text: string): string {
+  // Pattern 1: "Select the correct answer:" followed by option list
+  const selectIdx = text.search(/select the correct answer:?\s*$/im);
+  if (selectIdx !== -1) {
+    return text.substring(0, selectIdx).trim();
+  }
+
+  // Pattern 2: Multiline — "Select the correct answer:\n..."
+  const selectMultiIdx = text.search(/select the correct answer:?\s*\n/i);
+  if (selectMultiIdx !== -1) {
+    return text.substring(0, selectMultiIdx).trim();
+  }
+
+  // Pattern 3: Standalone option list at end — lines starting with (a)
+  const optionMatch = text.match(/\n\s*[-*]*\s*\*{0,2}\s*\(a\)/i);
+  if (optionMatch?.index !== undefined) {
+    return text.substring(0, optionMatch.index).trim();
+  }
+
+  return text;
+}
+
 const PYQCodeEditor = dynamic(() => import('./PYQCodeEditor'), { ssr: false });
 
 interface PYQQuestionCardProps {
@@ -245,7 +272,9 @@ export default function PYQQuestionCard({
           remarkPlugins={REMARK_PLUGINS}
           rehypePlugins={REHYPE_PLUGINS}
         >
-          {question.question}
+          {question.options && question.options.length > 0
+            ? stripEmbeddedOptions(question.question)
+            : question.question}
         </ReactMarkdown>
       </div>
 

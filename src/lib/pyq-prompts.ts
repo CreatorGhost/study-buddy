@@ -289,6 +289,96 @@ IMPORTANT RULES:
 }
 
 /**
+ * Build prompt for generating a single section of a CBSE sample paper.
+ * Smaller and more focused than buildGeneratePaperPrompt — designed to be
+ * called once per section in parallel.
+ */
+export function buildGenerateSectionPrompt(
+  subject: Subject,
+  sectionData: SectionPromptData,
+  startQuestionNumber: number,
+): string {
+  const { section, count, marksPerQuestion, rewordQuestions, patternQuestions, freshCount } = sectionData;
+
+  const isObjective = marksPerQuestion <= 1;
+  const typeHint = isObjective
+    ? 'MCQ/Objective — each must have exactly 4 options (a), (b), (c), (d) with one correct answer'
+    : marksPerQuestion <= 2
+    ? 'Short Answer'
+    : marksPerQuestion <= 3
+    ? 'Short/Medium Answer'
+    : 'Long Answer / Case-based';
+
+  let examplesBlock = '';
+
+  if (rewordQuestions.length > 0) {
+    examplesBlock += `[REWORD — modify these ${rewordQuestions.length} questions: change values, wording, options but keep the same concept]:\n`;
+    rewordQuestions.forEach((q, i) => {
+      examplesBlock += `${i + 1}. ${q.question}\n`;
+      if (q.options && q.options.length > 0) {
+        examplesBlock += `   Options: ${q.options.join(' | ')}\n`;
+      }
+      examplesBlock += `   Answer: ${q.correctAnswer}\n`;
+      if (q.topic) examplesBlock += `   Topic: ${q.topic}\n`;
+      examplesBlock += '\n';
+    });
+  }
+
+  if (patternQuestions.length > 0) {
+    examplesBlock += `[PATTERN — use these as style reference to generate ${freshCount} fresh questions on different topics]:\n`;
+    patternQuestions.forEach((q, i) => {
+      examplesBlock += `${i + 1}. ${q.question}\n`;
+      if (q.options && q.options.length > 0) {
+        examplesBlock += `   Options: ${q.options.join(' | ')}\n`;
+      }
+      examplesBlock += `   Answer: ${q.correctAnswer}\n`;
+      if (q.topic) examplesBlock += `   Topic: ${q.topic}\n`;
+      examplesBlock += '\n';
+    });
+  } else if (rewordQuestions.length === 0) {
+    examplesBlock += `[No examples available — generate all ${count} questions fresh for ${subject} at ${marksPerQuestion}-mark difficulty]\n`;
+  }
+
+  const endQuestionNumber = startQuestionNumber + count - 1;
+
+  return `You are a CBSE Class 12 ${subject} question paper setter. Generate ONLY Section ${section} of a sample paper.
+
+**Section ${section}:** ${count} questions × ${marksPerQuestion} mark${marksPerQuestion > 1 ? 's' : ''} each [${typeHint}]
+
+**Your task:**
+1. For questions marked [REWORD], modify them: change numerical values, wording, and options while keeping the same underlying concept and difficulty.
+2. For the remaining count, create FRESH original questions inspired by the [PATTERN] examples. Cover different topics from the ${subject} syllabus.
+3. Ensure all questions are appropriate for CBSE Class 12 level.
+
+${examplesBlock}
+
+Return a JSON object with this exact structure:
+{
+  "questions": [
+    {
+      "questionNumber": ${startQuestionNumber},
+      "section": "${section}",
+      "type": "${isObjective ? 'mcq' : marksPerQuestion <= 3 ? 'short-answer' : 'long-answer'}",
+      "question": "question text (use LaTeX: $formula$ for inline, $$formula$$ for display)",
+      "options": ${isObjective ? '["(a) option1", "(b) option2", "(c) option3", "(d) option4"]' : 'null'},
+      "correctAnswer": "the correct answer",
+      "solution": "Brief step-by-step explanation",
+      "marks": ${marksPerQuestion},
+      "topic": "Topic Name"
+    }
+  ]
+}
+
+IMPORTANT RULES:
+- Generate exactly ${count} questions, numbered ${startQuestionNumber} to ${endQuestionNumber}
+- All questions must have section "${section}"${isObjective ? '\n- Every question MUST be type "mcq" (or "assertion-reasoning"/"true-false"/"fill-blank") with exactly 4 options' : `\n- Questions should NOT have options (set options to null) unless they are case-based MCQs`}
+- Use LaTeX ($...$) for all mathematical/scientific expressions
+- Every question must have correctAnswer and solution
+- Cover diverse topics — do not repeat the same topic across questions
+- Match real CBSE board exam difficulty exactly`;
+}
+
+/**
  * Build prompt for image-based answer evaluation (vision)
  */
 export function buildImageCheckPrompt(
