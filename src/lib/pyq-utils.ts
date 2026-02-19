@@ -88,8 +88,8 @@ export function normalizeCorrectAnswer(correctAnswer: string): string {
     return dotMatch[1].toUpperCase();
   }
 
-  // For True/False questions, return as-is
-  return trimmed;
+  // For True/False questions (or any other fallthrough), uppercase to match caller
+  return trimmed.toUpperCase();
 }
 
 /**
