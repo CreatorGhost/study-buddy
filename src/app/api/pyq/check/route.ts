@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
             const prompt = buildCheckPrompt(subject, textQuestions);
             const response = await client.chat.completions.create({
               model: MODEL_FAST,
-              max_tokens: 4096,
+              max_completion_tokens: 4096,
               messages: [{ role: 'user', content: prompt }],
             });
 
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
             );
             const response = await client.chat.completions.create({
               model: MODEL_FAST,
-              max_tokens: 4096,
+              max_completion_tokens: 4096,
               messages: [{ role: 'user', content: prompt }],
             });
 
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
 
             const response = await client.chat.completions.create({
               model: MODEL_FAST,
-              max_tokens: 4096,
+              max_completion_tokens: 4096,
               messages: [
                 {
                   role: 'user',
