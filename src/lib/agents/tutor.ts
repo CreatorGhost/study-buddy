@@ -13,7 +13,6 @@ export async function* streamTutorResponse(
 
   const stream = await client.chat.completions.create({
     model: MODEL_SMART,
-    max_completion_tokens: 4096,
     messages: [
       { role: 'system', content: getTutorPrompt(subject) },
       ...apiMessages,

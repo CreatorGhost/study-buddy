@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     const response = await client.chat.completions.create({
       model: MODEL_SMART,
-      max_completion_tokens: 8192,
+
       messages: [{ role: 'user', content: prompt }],
     });
 

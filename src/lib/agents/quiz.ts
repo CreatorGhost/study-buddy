@@ -7,7 +7,6 @@ export async function generateQuiz(config: QuizConfig): Promise<QuizQuestion[]> 
 
   const response = await client.chat.completions.create({
     model: MODEL_SMART,
-    max_completion_tokens: 4096,
     messages: [
       { role: 'system', content: getQuizPrompt(config.subject) },
       { role: 'user', content: prompt },
@@ -35,7 +34,6 @@ export async function evaluateAnswer(
 ): Promise<string> {
   const response = await client.chat.completions.create({
     model: MODEL_SMART,
-    max_completion_tokens: 512,
     messages: [
       { role: 'system', content: `You are a ${subject} evaluator. Provide brief, constructive feedback on the student's answer.` },
       {

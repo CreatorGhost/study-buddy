@@ -13,7 +13,6 @@ export async function generateFlashcards(
 
   const response = await client.chat.completions.create({
     model: MODEL_SMART,
-    max_completion_tokens: 4096,
     messages: [
       { role: 'system', content: getFlashcardPrompt(subject) },
       { role: 'user', content: prompt },
