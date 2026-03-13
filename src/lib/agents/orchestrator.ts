@@ -31,7 +31,7 @@ export async function routeToAgent(
 ): Promise<{ agent: AgentType; reason: string }> {
   const response = await client.chat.completions.create({
     model: MODEL_FAST,
-    max_tokens: 256,
+    max_completion_tokens: 256,
     messages: [
       { role: 'system', content: getOrchestratorPrompt(subject) },
       { role: 'user', content: userMessage },
