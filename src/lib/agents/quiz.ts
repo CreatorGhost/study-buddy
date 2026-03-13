@@ -45,5 +45,5 @@ export async function evaluateAnswer(
     ],
   });
 
-  return response.choices[0]?.message?.content || '';
+  return response.choices[0]?.message?.content || 'Unable to evaluate answer. Please try again.';
 }

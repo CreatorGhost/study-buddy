@@ -42,11 +42,19 @@ export async function routeToAgent(
 
   const toolCall = response.choices[0]?.message?.tool_calls?.[0];
 
+  const VALID_AGENTS: AgentType[] = ['tutor', 'quiz', 'diagram', 'flashcard'];
+
   if (toolCall && toolCall.type === 'function') {
-    const input = JSON.parse(toolCall.function.arguments) as { agent: AgentType; reason: string };
-    return { agent: input.agent, reason: input.reason };
+    try {
+      const input = JSON.parse(toolCall.function.arguments) as { agent: string; reason: string };
+      if (VALID_AGENTS.includes(input.agent as AgentType) && typeof input.reason === 'string') {
+        return { agent: input.agent as AgentType, reason: input.reason };
+      }
+    } catch {
+      // Fall through to default
+    }
   }
 
-  // Default to tutor if routing fails
+  // Default to tutor if routing fails or payload is invalid
   return { agent: 'tutor', reason: 'Default routing' };
 }
