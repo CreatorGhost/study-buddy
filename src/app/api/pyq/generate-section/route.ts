@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import client, { MODEL_SMART } from '@/lib/anthropic';
+import client, { MODEL_SMART } from '@/lib/openai';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { buildGenerateSectionPrompt, SectionPromptData } from '@/lib/pyq-prompts';
 import { parseJsonResponse, shuffle, requiresDiagram } from '@/lib/pyq-utils';
@@ -122,13 +122,13 @@ export async function POST(req: NextRequest) {
 
     const prompt = buildGenerateSectionPrompt(subject, sectionData, startQuestionNumber);
 
-    const response = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODEL_SMART,
       max_tokens: 16384,
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = response.choices[0]?.message?.content || '';
     const parsed = parseJsonResponse(text);
 
     if (!parsed?.questions || !Array.isArray(parsed.questions)) {

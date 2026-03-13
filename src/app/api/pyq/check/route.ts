@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import client, { MODEL_FAST } from '@/lib/anthropic';
+import client, { MODEL_FAST } from '@/lib/openai';
 import {
   buildCheckPrompt,
   buildCodeCheckPrompt,
@@ -86,16 +86,13 @@ export async function POST(req: NextRequest) {
         (async () => {
           try {
             const prompt = buildCheckPrompt(subject, textQuestions);
-            const response = await client.messages.create({
+            const response = await client.chat.completions.create({
               model: MODEL_FAST,
               max_tokens: 4096,
               messages: [{ role: 'user', content: prompt }],
             });
 
-            const text =
-              response.content[0].type === 'text'
-                ? response.content[0].text
-                : '';
+            const text = response.choices[0]?.message?.content || '';
             const parsed = parseJsonResponse(text);
             if (Array.isArray(parsed?.results)) {
               for (const r of parsed.results) {
@@ -137,16 +134,13 @@ export async function POST(req: NextRequest) {
                 language: q.codeLanguage || 'python',
               }))
             );
-            const response = await client.messages.create({
+            const response = await client.chat.completions.create({
               model: MODEL_FAST,
               max_tokens: 4096,
               messages: [{ role: 'user', content: prompt }],
             });
 
-            const text =
-              response.content[0].type === 'text'
-                ? response.content[0].text
-                : '';
+            const text = response.choices[0]?.message?.content || '';
             const parsed = parseJsonResponse(text);
             if (Array.isArray(parsed?.results)) {
               for (const r of parsed.results) {
@@ -185,14 +179,8 @@ export async function POST(req: NextRequest) {
             );
 
             const dataUrl = q.imageBase64!;
-            const mediaTypeMatch = dataUrl.match(/^data:(image\/\w+);base64,/);
-            const mediaType = (mediaTypeMatch?.[1] || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
-            const base64Data = dataUrl.replace(
-              /^data:image\/\w+;base64,/,
-              ''
-            );
 
-            const response = await client.messages.create({
+            const response = await client.chat.completions.create({
               model: MODEL_FAST,
               max_tokens: 4096,
               messages: [
@@ -200,12 +188,8 @@ export async function POST(req: NextRequest) {
                   role: 'user',
                   content: [
                     {
-                      type: 'image',
-                      source: {
-                        type: 'base64',
-                        media_type: mediaType,
-                        data: base64Data,
-                      },
+                      type: 'image_url',
+                      image_url: { url: dataUrl },
                     },
                     { type: 'text', text: prompt },
                   ],
@@ -213,10 +197,7 @@ export async function POST(req: NextRequest) {
               ],
             });
 
-            const text =
-              response.content[0].type === 'text'
-                ? response.content[0].text
-                : '';
+            const text = response.choices[0]?.message?.content || '';
             const parsed = parseJsonResponse(text);
             if (parsed) {
               const raw: CheckResult = {

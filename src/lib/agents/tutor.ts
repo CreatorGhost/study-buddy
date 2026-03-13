@@ -1,4 +1,4 @@
-import client, { MODEL_SMART } from '@/lib/anthropic';
+import client, { MODEL_SMART } from '@/lib/openai';
 import { getTutorPrompt } from '@/lib/prompts';
 import { Subject, Message } from '@/types';
 
@@ -11,16 +11,20 @@ export async function* streamTutorResponse(
     content: m.content,
   }));
 
-  const stream = client.messages.stream({
+  const stream = await client.chat.completions.create({
     model: MODEL_SMART,
     max_tokens: 4096,
-    system: getTutorPrompt(subject),
-    messages: apiMessages,
+    messages: [
+      { role: 'system', content: getTutorPrompt(subject) },
+      ...apiMessages,
+    ],
+    stream: true,
   });
 
-  for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-      yield event.delta.text;
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content;
+    if (text) {
+      yield text;
     }
   }
 }

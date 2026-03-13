@@ -1,21 +1,20 @@
-import client, { MODEL_SMART } from '@/lib/anthropic';
+import client, { MODEL_SMART } from '@/lib/openai';
 import { getQuizPrompt } from '@/lib/prompts';
 import { Subject, QuizQuestion, QuizConfig } from '@/types';
 
 export async function generateQuiz(config: QuizConfig): Promise<QuizQuestion[]> {
   const prompt = `Generate ${config.numQuestions} ${config.difficulty} difficulty ${config.questionType === 'mixed' ? 'mixed (MCQ and assertion-reasoning)' : config.questionType} questions on the topic: "${config.topic}" for ${config.subject}.`;
 
-  const response = await client.messages.create({
+  const response = await client.chat.completions.create({
     model: MODEL_SMART,
     max_tokens: 4096,
-    system: getQuizPrompt(config.subject),
-    messages: [{ role: 'user', content: prompt }],
+    messages: [
+      { role: 'system', content: getQuizPrompt(config.subject) },
+      { role: 'user', content: prompt },
+    ],
   });
 
-  const text = response.content
-    .filter(block => block.type === 'text')
-    .map(block => ('text' in block ? block.text : ''))
-    .join('');
+  const text = response.choices[0]?.message?.content || '';
 
   // Extract JSON from the response
   const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -34,18 +33,17 @@ export async function evaluateAnswer(
   correctAnswer: string,
   subject: Subject
 ): Promise<string> {
-  const response = await client.messages.create({
+  const response = await client.chat.completions.create({
     model: MODEL_SMART,
     max_tokens: 512,
-    system: `You are a ${subject} evaluator. Provide brief, constructive feedback on the student's answer.`,
-    messages: [{
-      role: 'user',
-      content: `Question: ${question}\nStudent's answer: ${studentAnswer}\nCorrect answer: ${correctAnswer}\n\nProvide feedback in 2-3 sentences.`,
-    }],
+    messages: [
+      { role: 'system', content: `You are a ${subject} evaluator. Provide brief, constructive feedback on the student's answer.` },
+      {
+        role: 'user',
+        content: `Question: ${question}\nStudent's answer: ${studentAnswer}\nCorrect answer: ${correctAnswer}\n\nProvide feedback in 2-3 sentences.`,
+      },
+    ],
   });
 
-  return response.content
-    .filter(block => block.type === 'text')
-    .map(block => ('text' in block ? block.text : ''))
-    .join('');
+  return response.choices[0]?.message?.content || '';
 }
