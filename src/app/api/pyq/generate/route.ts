@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import client, { MODEL_SMART } from '@/lib/anthropic';
+import client, { MODEL_SMART } from '@/lib/openai';
 import { buildGeneratePrompt } from '@/lib/pyq-prompts';
 import { parseJsonResponse } from '@/lib/pyq-utils';
 import { Subject, PYQQuestion } from '@/types';
@@ -65,14 +65,13 @@ export async function POST(req: NextRequest) {
       sampleQuestions
     );
 
-    const response = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODEL_SMART,
       max_tokens: 8192,
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const text =
-      response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = response.choices[0]?.message?.content || '';
 
     const parsed = parseJsonResponse(text);
 
